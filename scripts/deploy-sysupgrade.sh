@@ -1,15 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 <router_ip> [ssh_user]"
+if [ $# -lt 1 ] || [ $# -gt 3 ]; then
+    echo "Usage: $0 <router_ip> [ssh_user] [ssh_password]"
     echo "Example: $0 10.0.4.123"
+    echo "Example: $0 10.0.4.123 root r0ut3r"
     exit 1
 fi
 
 ROUTER_IP="$1"
 SSH_USER="${2:-root}"
-ROUTER_PASS="${ROUTER_PASS:-r0ut3r}"
+ROUTER_PASS="${3:-${ROUTER_PASS:-r0ut3r}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 IMAGE="$PROJECT_DIR/openwrt/bin/targets/ar71xx/tiny/openwrt-ar71xx-tiny-tl-wr740n-v6-squashfs-sysupgrade.bin"

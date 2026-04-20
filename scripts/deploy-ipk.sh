@@ -1,9 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-    echo "Usage: $0 <router_ip> <package_name> [ssh_user]"
+if [ $# -lt 2 ] || [ $# -gt 4 ]; then
+    echo "Usage: $0 <router_ip> <package_name> [ssh_user] [ssh_password]"
     echo "Example: $0 10.0.4.123 eoip"
+    echo "Example: $0 10.0.4.123 eoip root r0ut3r"
     echo
     echo "Optional environment variables:"
     echo "  ROUTER_PASS=<password>     (default: r0ut3r)"
@@ -17,7 +18,7 @@ fi
 ROUTER_IP="$1"
 PACKAGE="$2"
 SSH_USER="${3:-root}"
-ROUTER_PASS="${ROUTER_PASS:-r0ut3r}"
+ROUTER_PASS="${4:-${ROUTER_PASS:-r0ut3r}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"

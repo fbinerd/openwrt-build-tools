@@ -21,10 +21,10 @@ print_help() {
 Usage:
   ./start.sh                  # open interactive menu
   ./start.sh docker [normal|clean] [router_name_or_config_file]
-  ./start.sh ipk <ip> <pkg> [user]
-  ./start.sh sysupgrade <ip> [user]
-  ./start.sh deploy-ipk <ip> <pkg> [user]
-  ./start.sh deploy-sysupgrade <ip> [user]
+  ./start.sh ipk <ip> <pkg> [user] [password]
+  ./start.sh sysupgrade <ip> [user] [password]
+  ./start.sh deploy-ipk <ip> <pkg> [user] [password]
+  ./start.sh deploy-sysupgrade <ip> [user] [password]
   ./start.sh diagnose <ip> [user] [vxlan_uci_section]
   ./start.sh patches          # apply patches in openwrt
   ./start.sh backup-config    # backup openwrt/.config to router-configs/
