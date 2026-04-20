@@ -10,7 +10,9 @@ fi
 ROUTER_IP="$1"
 SSH_USER="${2:-root}"
 ROUTER_PASS="${ROUTER_PASS:-r0ut3r}"
-IMAGE="/media/storage/opw1/openwrt/bin/targets/ar71xx/tiny/openwrt-ar71xx-tiny-tl-wr740n-v6-squashfs-sysupgrade.bin"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+IMAGE="$PROJECT_DIR/openwrt/bin/targets/ar71xx/tiny/openwrt-ar71xx-tiny-tl-wr740n-v6-squashfs-sysupgrade.bin"
 REMOTE_IMAGE="/tmp/$(basename "$IMAGE")"
 SSH_OPTS=(
     -o HostKeyAlgorithms=+ssh-rsa

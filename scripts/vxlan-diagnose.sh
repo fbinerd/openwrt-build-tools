@@ -12,6 +12,8 @@ ROUTER_IP="$1"
 SSH_USER="${2:-root}"
 UCI_SECTION="${3:-}"
 ROUTER_PASS="${ROUTER_PASS:-r0ut3r}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 SSH_OPTS=(
     -o HostKeyAlgorithms=+ssh-rsa
@@ -19,7 +21,7 @@ SSH_OPTS=(
     -o StrictHostKeyChecking=accept-new
 )
 
-REPORT_DIR="/media/storage/opw1/reports"
+REPORT_DIR="$PROJECT_DIR/reports"
 mkdir -p "$REPORT_DIR"
 TS="$(date +%Y%m%d-%H%M%S)"
 REPORT_FILE="$REPORT_DIR/vxlan-diagnose-${ROUTER_IP}-${TS}.txt"

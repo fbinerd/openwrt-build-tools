@@ -1,4 +1,4 @@
-# opw1
+# openwrt-build-tools
 
 Workspace de build e deploy para OpenWrt 18.06, com organização de scripts em `scripts/` e um launcher único na raiz.
 
@@ -6,7 +6,7 @@ Workspace de build e deploy para OpenWrt 18.06, com organização de scripts em 
 
 - `start.sh`: launcher principal (menu interativo + modo por comando)
 - `scripts/`: scripts operacionais
-- `openwrt/`: árvore local do OpenWrt (não versionada no `opw1`)
+- `openwrt/`: árvore local do OpenWrt (não versionada no `openwrt-build-tools`)
 - `patches/openwrt/`: patches opcionais aplicados no início do build
 - `reports/`: relatórios de diagnóstico
 - `dl/`: cache de downloads
@@ -45,5 +45,5 @@ Também funciona por comando direto:
 
 ## Versionamento
 
-- O repositório `opw1` versiona apenas automação (scripts, patches e documentação).
+- O repositório `openwrt-build-tools` versiona apenas automação (scripts, patches e documentação).
 - A pasta `openwrt/` é sempre reconstruída por clone oficial + aplicação de patches.

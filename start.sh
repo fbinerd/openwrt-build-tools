@@ -65,7 +65,7 @@ fi
 while true; do
     cat <<'EOF'
 
-=== OPW1 CLI ===
+=== OPENWRT BUILD TOOLS CLI ===
 1) Docker build (normal)
 2) Docker build (clean)
 3) Deploy sysupgrade

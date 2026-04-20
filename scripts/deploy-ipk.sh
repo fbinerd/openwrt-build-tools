@@ -7,7 +7,7 @@ if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     echo
     echo "Variaveis opcionais:"
     echo "  ROUTER_PASS=<senha>        (padrao: r0ut3r)"
-    echo "  OPENWRT_DIR=<path>         (padrao: /media/storage/opw1/openwrt)"
+    echo "  OPENWRT_DIR=<path>         (padrao: <repo>/openwrt)"
     echo "  JOBS=<n>                   (padrao: nproc)"
     echo "  NO_CLEAN=1                 (nao roda target clean)"
     echo "  PKG_TARGET=<target_make>   (ex.: package/feeds/customfeed/eoip)"
@@ -18,7 +18,9 @@ ROUTER_IP="$1"
 PACKAGE="$2"
 SSH_USER="${3:-root}"
 ROUTER_PASS="${ROUTER_PASS:-r0ut3r}"
-OPENWRT_DIR="${OPENWRT_DIR:-/media/storage/opw1/openwrt}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 JOBS="${JOBS:-$(nproc)}"
 
 SSH_OPTS=(
