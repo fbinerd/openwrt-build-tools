@@ -28,6 +28,7 @@ Direct command mode is also available:
 ./start.sh sysupgrade <ip> [user]
 ./start.sh diagnose <ip> [user] [vxlan_uci_section]
 ./start.sh patches
+./start.sh backup-config
 ```
 
 `docker` mode behavior:
@@ -51,6 +52,12 @@ Make jobs behavior:
 - Press Enter to keep default `make` behavior.
 - Enter a number (for example `40`) to use parallel mode (`make -j40`).
 
+Backup current router profile:
+
+- `./start.sh backup-config` reads current `openwrt/.config`.
+- It detects target/profile and stores a copy in `router-configs/`.
+- File format: `brand_router-model.config` (example: `tplink_tl-wr740n-v6.config`).
+
 ## Scripts in `scripts/`
 
 - `docker-build.sh`: runs build inside a Docker container
@@ -59,6 +66,7 @@ Make jobs behavior:
 - `deploy-sysupgrade.sh`: uploads firmware and runs `sysupgrade -c`
 - `deploy-ipk.sh`: builds one package and installs it on the router
 - `vxlan-diagnose.sh`: collects remote VXLAN diagnostics and stores reports under `reports/`
+- `backup-router-config.sh`: saves current `openwrt/.config` as a named router profile
 
 ## Custom feed notes
 

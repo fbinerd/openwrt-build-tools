@@ -25,6 +25,7 @@ Usage:
   ./start.sh sysupgrade <ip> [user]
   ./start.sh diagnose <ip> [user] [vxlan_uci_section]
   ./start.sh patches          # apply patches in openwrt
+  ./start.sh backup-config    # backup openwrt/.config to router-configs/
 EOT
 }
 
@@ -57,6 +58,11 @@ if [ "${1:-}" = "patches" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "backup-config" ]; then
+    run_script "backup-router-config.sh"
+    exit 0
+fi
+
 if [ -n "${1:-}" ]; then
     print_help
     exit 1
@@ -72,7 +78,8 @@ while true; do
 4) Build + deploy IPK
 5) VXLAN diagnose
 6) Apply openwrt patches
-7) Exit
+7) Backup router .config profile
+8) Exit
 EOT
 
     read -rp "Choose an option: " opt
@@ -112,6 +119,9 @@ EOT
             run_script "apply-openwrt-patches.sh" "$ROOT_DIR/openwrt" "$ROOT_DIR/patches/openwrt"
             ;;
         7)
+            run_script "backup-router-config.sh"
+            ;;
+        8)
             echo "Exiting."
             exit 0
             ;;
