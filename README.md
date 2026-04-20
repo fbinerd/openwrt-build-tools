@@ -38,6 +38,8 @@ Uses current binaries/workspace as-is, does not clean, and opens an interactive 
 - `./start.sh docker clean`:
 Deletes local `openwrt/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell. `dl/` cache is preserved.
 The OpenWrt clone is intentionally non-shallow to avoid revision-range failures in OpenWrt 18.06 version scripts.
+When compiled tools are detected, clean mode asks whether to remove them.
+If you answer Enter/No, compiled tools are preserved to save rebuild time.
 
 Router profile behavior:
 

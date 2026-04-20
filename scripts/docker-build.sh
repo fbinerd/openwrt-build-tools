@@ -22,17 +22,35 @@ ROUTER_CONFIGS_DIR="${ROUTER_CONFIGS_DIR:-$PROJECT_DIR/router-configs}"
 SELECTED_ROUTER_CONFIG="${2:-}"
 DEFAULT_ROUTER_CONFIG="${DEFAULT_ROUTER_CONFIG:-$ROUTER_CONFIGS_DIR/default.config}"
 MAKE_JOBS="${MAKE_JOBS:-}"
+CLEAN_TOOLS="${CLEAN_TOOLS:-ask}"
 
 if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
     echo "Usage: $0 [normal|clean] [router_name_or_config_file]"
     exit 1
 fi
 
-# 1) Optional clean mode
-if [ "$MODE" = "clean" ]; then
-    echo "'clean' mode detected. Removing only local OpenWrt workspace (download cache is preserved)..."
-    rm -rf "$OPENWRT_SRC"
-fi
+has_compiled_tools() {
+    [ -d "$OPENWRT_SRC/staging_dir/host" ] && return 0
+    [ -d "$OPENWRT_SRC/staging_dir/hostpkg" ] && return 0
+    [ -d "$OPENWRT_SRC/build_dir/host" ] && return 0
+    [ -d "$OPENWRT_SRC/build_dir/hostpkg" ] && return 0
+    compgen -G "$OPENWRT_SRC/staging_dir/toolchain-*" >/dev/null && return 0
+    compgen -G "$OPENWRT_SRC/build_dir/toolchain-*" >/dev/null && return 0
+    return 1
+}
+
+pick_clean_tools_interactive() {
+    local answer
+    read -rp "Compiled tools detected. Delete all compiled tools as well? [y/N]: " answer
+    case "$answer" in
+        y|Y|yes|YES)
+            CLEAN_TOOLS=1
+            ;;
+        *)
+            CLEAN_TOOLS=0
+            ;;
+    esac
+}
 
 # Auto-install Docker if missing
 if ! command -v docker &> /dev/null; then
@@ -165,6 +183,40 @@ pick_make_jobs_interactive() {
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$ROUTER_CONFIGS_DIR"
+
+# 1) Optional clean mode (preserving dl/ always)
+if [ "$MODE" = "clean" ] && [ -f "$OPENWRT_SRC/Makefile" ] && [ -d "$OPENWRT_SRC/.git" ]; then
+    if [ "$CLEAN_TOOLS" = "ask" ]; then
+        if has_compiled_tools; then
+            pick_clean_tools_interactive
+        else
+            CLEAN_TOOLS=0
+        fi
+    fi
+
+    echo "'clean' mode detected. Resetting local OpenWrt workspace (dl/ preserved)..."
+    if [ "$CLEAN_TOOLS" = "1" ]; then
+        echo "Removing source artifacts + compiled tools..."
+        (
+            cd "$OPENWRT_SRC"
+            git reset --hard
+            git clean -fdx
+        )
+    else
+        echo "Removing source artifacts only (keeping compiled tools)..."
+        (
+            cd "$OPENWRT_SRC"
+            git reset --hard
+            git clean -fdx \
+                -e staging_dir/host \
+                -e staging_dir/hostpkg \
+                -e 'staging_dir/toolchain-*' \
+                -e build_dir/host \
+                -e build_dir/hostpkg \
+                -e 'build_dir/toolchain-*'
+        )
+    fi
+fi
 
 # Ensure OpenWrt source exists (official clone)
 if [ ! -f "$OPENWRT_SRC/Makefile" ]; then
