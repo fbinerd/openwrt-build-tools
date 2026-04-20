@@ -26,6 +26,7 @@ Usage:
   ./start.sh diagnose <ip> [user] [vxlan_uci_section]
   ./start.sh patches          # apply patches in openwrt
   ./start.sh backup-config    # backup openwrt/.config to router-configs/
+  ./start.sh purge            # remove local docker/runtime/cache data
 EOT
 }
 
@@ -63,6 +64,12 @@ if [ "${1:-}" = "backup-config" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "purge" ]; then
+    shift || true
+    run_script "purge-workspace.sh" "$@"
+    exit 0
+fi
+
 if [ -n "${1:-}" ]; then
     print_help
     exit 1
@@ -79,7 +86,8 @@ while true; do
 5) VXLAN diagnose
 6) Apply openwrt patches
 7) Backup router .config profile
-8) Exit
+8) Purge local runtime/cache data
+9) Exit
 EOT
 
     read -rp "Choose an option: " opt
@@ -122,6 +130,9 @@ EOT
             run_script "backup-router-config.sh"
             ;;
         8)
+            run_script "purge-workspace.sh"
+            ;;
+        9)
             echo "Exiting."
             exit 0
             ;;

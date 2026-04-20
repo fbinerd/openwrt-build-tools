@@ -21,6 +21,7 @@ Or run directly:
 ./start.sh docker clean
 ./start.sh docker clean tplink_tl-wr740n-v6
 ./start.sh backup-config
+./start.sh purge
 ./start.sh ipk <ip> <package> [user]
 ./start.sh sysupgrade <ip> [user]
 ./start.sh diagnose <ip> [user] [vxlan_uci_section]
@@ -99,6 +100,25 @@ This reads `openwrt/.config`, detects target/profile, and writes:
 - `router-configs/brand_router-model.config`
 - example: `router-configs/tplink_tl-wr740n-v6.config`
 
+## Purge Local Runtime/Cache Data
+
+```sh
+./start.sh purge
+```
+
+Use this when you want to stop using the project and free host resources:
+
+- removes Docker container `openwrt_build` (if present)
+- removes Docker image `openwrt-18.06-builder` (if present)
+- removes local `openwrt/`, `dl/`, and `reports/`
+- recreates empty `dl/` and `reports/`
+
+Non-interactive mode:
+
+```sh
+./start.sh purge --yes
+```
+
 ## Script Reference
 
 - `scripts/docker-build.sh`: Docker orchestration and mode logic
@@ -108,6 +128,7 @@ This reads `openwrt/.config`, detects target/profile, and writes:
 - `scripts/deploy-sysupgrade.sh`: upload firmware + `sysupgrade -c`
 - `scripts/vxlan-diagnose.sh`: collect VXLAN diagnostics
 - `scripts/backup-router-config.sh`: export current `.config` as named profile
+- `scripts/purge-workspace.sh`: purge local Docker runtime/cache/build workspace
 
 ## Feed/Patch Rules
 
