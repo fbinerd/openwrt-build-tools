@@ -32,8 +32,11 @@ fi
 has_compiled_tools() {
     [ -d "$OPENWRT_SRC/staging_dir/host" ] && return 0
     [ -d "$OPENWRT_SRC/staging_dir/hostpkg" ] && return 0
+    [ -d "$OPENWRT_SRC/staging_dir/toolchain" ] && return 0
     [ -d "$OPENWRT_SRC/build_dir/host" ] && return 0
     [ -d "$OPENWRT_SRC/build_dir/hostpkg" ] && return 0
+    [ -d "$OPENWRT_SRC/build_dir/toolchain" ] && return 0
+    compgen -G "$OPENWRT_SRC/build_dir/tool-*" >/dev/null && return 0
     compgen -G "$OPENWRT_SRC/staging_dir/toolchain-*" >/dev/null && return 0
     compgen -G "$OPENWRT_SRC/build_dir/toolchain-*" >/dev/null && return 0
     return 1
@@ -41,7 +44,7 @@ has_compiled_tools() {
 
 pick_clean_tools_interactive() {
     local answer
-    read -rp "Compiled tools detected. Delete all compiled tools as well? [y/N]: " answer
+    read -rp "Compiled tools/toolchain detected. Delete all compiled tools/toolchain as well? [y/N]: " answer
     case "$answer" in
         y|Y|yes|YES)
             CLEAN_TOOLS=1
@@ -203,16 +206,19 @@ if [ "$MODE" = "clean" ] && [ -f "$OPENWRT_SRC/Makefile" ] && [ -d "$OPENWRT_SRC
             git clean -fdx
         )
     else
-        echo "Removing source artifacts only (keeping compiled tools)..."
+        echo "Removing source artifacts only (keeping compiled tools/toolchain)..."
         (
             cd "$OPENWRT_SRC"
             git reset --hard
             git clean -fdx \
                 -e staging_dir/host \
                 -e staging_dir/hostpkg \
+                -e staging_dir/toolchain \
                 -e 'staging_dir/toolchain-*' \
                 -e build_dir/host \
                 -e build_dir/hostpkg \
+                -e build_dir/toolchain \
+                -e 'build_dir/tool-*' \
                 -e 'build_dir/toolchain-*'
         )
     fi
