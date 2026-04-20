@@ -48,13 +48,19 @@ else
 fi
 
 # 2) Never modify feeds.conf.default.
-# Only ensure feeds.conf contains the custom feed.
+# Ensure feeds.conf exists and always includes official feeds baseline.
 if [ ! -f "$OPENWRT_DIR/feeds.conf" ]; then
     if [ -f "$OPENWRT_DIR/feeds.conf.default" ]; then
         cp "$OPENWRT_DIR/feeds.conf.default" "$OPENWRT_DIR/feeds.conf"
     else
         : > "$OPENWRT_DIR/feeds.conf"
     fi
+fi
+
+# If feeds.conf does not include official LuCI feed, re-seed from feeds.conf.default.
+if [ -f "$OPENWRT_DIR/feeds.conf.default" ] && ! grep -qE '^src-git[[:space:]]+luci[[:space:]]' "$OPENWRT_DIR/feeds.conf"; then
+    echo "INFO: feeds.conf missing official feeds baseline; restoring from feeds.conf.default"
+    cp "$OPENWRT_DIR/feeds.conf.default" "$OPENWRT_DIR/feeds.conf"
 fi
 
 sed -i \
