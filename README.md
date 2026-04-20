@@ -34,7 +34,7 @@ Direct command mode is also available:
 - `./start.sh docker`:
 Uses current binaries/workspace as-is, does not clean, and opens an interactive shell in the build container.
 - `./start.sh docker clean`:
-Deletes local `openwrt/` and `dl/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell.
+Deletes local `openwrt/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell. `dl/` cache is preserved.
 
 ## Scripts in `scripts/`
 

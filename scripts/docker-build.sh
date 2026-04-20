@@ -26,8 +26,8 @@ fi
 
 # 1) Optional clean mode
 if [ "$MODE" = "clean" ]; then
-    echo "'clean' mode detected. Removing local OpenWrt workspace and download cache..."
-    rm -rf "$OPENWRT_SRC" "$DOWNLOAD_DIR"
+    echo "'clean' mode detected. Removing only local OpenWrt workspace (download cache is preserved)..."
+    rm -rf "$OPENWRT_SRC"
 fi
 
 # Auto-install Docker if missing
