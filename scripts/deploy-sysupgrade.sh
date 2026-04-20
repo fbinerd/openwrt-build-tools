@@ -19,9 +19,6 @@ SSH_OPTS=(
     -o PubkeyAcceptedAlgorithms=+ssh-rsa
     -o StrictHostKeyChecking=accept-new
 )
-SCP_OPTS=(
-    -O
-)
 
 if ! [[ "$ROUTER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     echo "Invalid IP: $ROUTER_IP"
@@ -34,19 +31,13 @@ if [ ! -f "$IMAGE" ]; then
     exit 1
 fi
 
-echo "Uploading firmware to ${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE} ..."
+echo "Uploading firmware and running sysupgrade in a single SSH session..."
+REMOTE_CMD="cat > '${REMOTE_IMAGE}' && sysupgrade -c '${REMOTE_IMAGE}'"
 if command -v sshpass >/dev/null 2>&1; then
-    SSHPASS="$ROUTER_PASS" sshpass -e scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IMAGE" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE}"
+    SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD" < "$IMAGE"
 else
-    echo "Warning: 'sshpass' not found, password will be requested in terminal."
-    scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IMAGE" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE}"
-fi
-
-echo "Running sysupgrade with config preservation (-c) ..."
-if command -v sshpass >/dev/null 2>&1; then
-    SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "sysupgrade -c '${REMOTE_IMAGE}'"
-else
-    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "sysupgrade -c '${REMOTE_IMAGE}'"
+    echo "Warning: 'sshpass' not found, password will be requested once in terminal."
+    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD" < "$IMAGE"
 fi
 
 echo "Command sent. Router should reboot next."

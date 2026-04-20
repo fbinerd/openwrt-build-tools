@@ -28,7 +28,6 @@ SSH_OPTS=(
     -o PubkeyAcceptedAlgorithms=+ssh-rsa
     -o StrictHostKeyChecking=accept-new
 )
-SCP_OPTS=(-O)
 
 if ! [[ "$ROUTER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     echo "Invalid IP: $ROUTER_IP"
@@ -83,20 +82,13 @@ fi
 
 REMOTE_IPK="/tmp/$(basename "$IPK")"
 
-echo "Uploading IPK: $IPK -> ${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
+echo "Uploading IPK and installing in a single SSH session..."
+REMOTE_CMD="cat > '${REMOTE_IPK}' && opkg install --force-reinstall '${REMOTE_IPK}' && opkg list-installed | grep '^${PACKAGE} ' || true"
 if command -v sshpass >/dev/null 2>&1; then
-    SSHPASS="$ROUTER_PASS" sshpass -e scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IPK" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
+    SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD" < "$IPK"
 else
-    echo "Warning: 'sshpass' not found, password will be requested in terminal."
-    scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IPK" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
-fi
-
-echo "Installing package on router ..."
-REMOTE_CMD="opkg install --force-reinstall '${REMOTE_IPK}' && opkg list-installed | grep '^${PACKAGE} ' || true"
-if command -v sshpass >/dev/null 2>&1; then
-    SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD"
-else
-    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD"
+    echo "Warning: 'sshpass' not found, password will be requested once in terminal."
+    ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD" < "$IPK"
 fi
 
 echo "Done."
