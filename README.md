@@ -44,6 +44,12 @@ Router profile behavior:
 - If you select one, it is copied to `openwrt/.config` (replacing the existing one).
 - If you press Enter or choose none, behavior remains unchanged.
 
+Make jobs behavior:
+
+- During Docker flow, the script asks how many CPU cores should be used by `make`.
+- Press Enter to keep default `make` behavior.
+- Enter a number (for example `40`) to use parallel mode (`make -j40`).
+
 ## Scripts in `scripts/`
 
 - `docker-build.sh`: runs build inside a Docker container

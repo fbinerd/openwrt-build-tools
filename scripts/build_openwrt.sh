@@ -12,11 +12,27 @@ OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 PATCH_DIR="${PATCH_DIR:-$PROJECT_DIR/patches/openwrt}"
 DL_CACHE_DIR="${DL_CACHE_DIR:-/home/developer/dl_cache}"
 MODE="${OWT_MODE:-normal}"
+MAKE_JOBS="${OWT_MAKE_JOBS:-}"
 
 if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
     echo "ERROR: invalid OWT_MODE '$MODE' (expected normal or clean)."
     exit 1
 fi
+
+if [ -n "$MAKE_JOBS" ] && { ! [[ "$MAKE_JOBS" =~ ^[0-9]+$ ]] || [ "$MAKE_JOBS" -le 0 ]; }; then
+    echo "ERROR: invalid OWT_MAKE_JOBS '$MAKE_JOBS' (expected positive integer)."
+    exit 1
+fi
+
+if [ -n "$MAKE_JOBS" ]; then
+    MAKE_CMD=(make "-j$MAKE_JOBS")
+else
+    MAKE_CMD=(make)
+fi
+
+run_make() {
+    "${MAKE_CMD[@]}" "$@"
+}
 
 # Enter local OpenWrt source tree
 cd "$OPENWRT_DIR"
@@ -58,9 +74,9 @@ echo "--- Step 2: Installing feeds ---"
 
 echo "--- Step 3: Downloading base sources ---"
 if [ ! -f .config ]; then
-    make defconfig
+    run_make defconfig
 fi
-make download
+run_make download
 
 echo "--- Step 4: Enabling customfeed tunnel packages ---"
 # Remove legacy external eoip app integration that conflicts with current customfeed-based flow.
@@ -83,7 +99,7 @@ echo "CONFIG_PACKAGE_luci-proto-eoip=y" >> .config
 echo "CONFIG_PACKAGE_vxlan=y" >> .config
 echo "CONFIG_PACKAGE_luci-proto-vxlan=y" >> .config
 
-make defconfig
+run_make defconfig
 
 echo "--- Setup completed successfully! ---"
 exec /bin/bash

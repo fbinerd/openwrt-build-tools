@@ -20,6 +20,7 @@ CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
 MODE="${1:-normal}"
 ROUTER_CONFIGS_DIR="${ROUTER_CONFIGS_DIR:-$PROJECT_DIR/router-configs}"
 SELECTED_ROUTER_CONFIG="${2:-}"
+MAKE_JOBS="${MAKE_JOBS:-}"
 
 if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
     echo "Usage: $0 [normal|clean] [router_name_or_config_file]"
@@ -141,6 +142,24 @@ resolve_router_config_path() {
     SELECTED_ROUTER_CONFIG="$path"
 }
 
+pick_make_jobs_interactive() {
+    local answer
+
+    read -rp "How many CPU cores should make use? (Enter = default make): " answer
+    if [ -z "$answer" ]; then
+        MAKE_JOBS=""
+        return 0
+    fi
+
+    if [[ "$answer" =~ ^[0-9]+$ ]] && [ "$answer" -gt 0 ]; then
+        MAKE_JOBS="$answer"
+        return 0
+    fi
+
+    echo "Invalid value. Falling back to default make."
+    MAKE_JOBS=""
+}
+
 # Ensure host cache/work dirs exist
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
@@ -169,6 +188,16 @@ if [ -n "$SELECTED_ROUTER_CONFIG" ]; then
     fi
 fi
 
+if [ -z "$MAKE_JOBS" ]; then
+    pick_make_jobs_interactive
+fi
+
+if [ -n "$MAKE_JOBS" ]; then
+    echo "Using parallel make: -j$MAKE_JOBS"
+else
+    echo "Using default make (no -j override)."
+fi
+
 chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
 
 # 2) Build Docker image
@@ -193,6 +222,7 @@ $DOCKER_CMD run --rm -it \
     -v "$DOWNLOAD_DIR":"$CONTAINER_DL_CACHE_DIR" \
     -e DL_CACHE_DIR="$CONTAINER_DL_CACHE_DIR" \
     -e OWT_MODE="$MODE" \
+    -e OWT_MAKE_JOBS="$MAKE_JOBS" \
     -w "$CONTAINER_PROJECT_DIR" \
     --name openwrt_build \
     openwrt-18.06-builder \
