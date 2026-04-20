@@ -47,6 +47,9 @@ echo "--- Clean mode: bootstrapping from fresh clone and applying patches ---"
 echo "--- Step 0.1: Applying local patches in openwrt ---"
 "$PROJECT_DIR/scripts/apply-openwrt-patches.sh" "$OPENWRT_DIR" "$PATCH_DIR"
 
+echo "--- Step 0.2: Cleaning stale customfeed metadata ---"
+rm -rf feeds/customfeed feeds/customfeed.tmp feeds/customfeed.index feeds/customfeed.targetindex
+
 echo "--- Step 1: Updating feeds ---"
 ./scripts/feeds update -a
 
@@ -59,22 +62,26 @@ if [ ! -f .config ]; then
 fi
 make download
 
-echo "--- Step 4: Installing openwrt-linux-eoip dependency (kernel module) ---"
-if [ ! -d package/openwrt-linux-eoip ]; then
-    git clone https://github.com/bogdik/openwrt-linux-eoip.git package/openwrt-linux-eoip
-fi
+echo "--- Step 4: Enabling customfeed tunnel packages ---"
+# Remove legacy external eoip app integration that conflicts with current customfeed-based flow.
+rm -rf feeds/luci/applications/luci-app-eoip
+rm -f package/feeds/luci/luci-app-eoip
+rm -rf package/openwrt-linux-eoip
 
-echo "--- Step 5: Installing luci-app-eoip as described in README ---"
-mkdir -p feeds/luci/applications/luci-app-eoip
-if [ ! -d feeds/luci/applications/luci-app-eoip/.git ]; then
-    git clone https://github.com/bogdik/luci-app-eoip.git feeds/luci/applications/luci-app-eoip
-fi
+# Keep config idempotent if script is rerun.
+sed -i \
+    -e '/^CONFIG_PACKAGE_kmod-eoip=/d' \
+    -e '/^CONFIG_PACKAGE_luci-app-eoip=/d' \
+    -e '/^CONFIG_PACKAGE_eoip=/d' \
+    -e '/^CONFIG_PACKAGE_luci-proto-eoip=/d' \
+    -e '/^CONFIG_PACKAGE_vxlan=/d' \
+    -e '/^CONFIG_PACKAGE_luci-proto-vxlan=/d' \
+    .config
 
-mkdir -p package/feeds/luci/
-ln -sf ../../../feeds/luci/applications/luci-app-eoip package/feeds/luci/luci-app-eoip
-
-echo "CONFIG_PACKAGE_kmod-eoip=y" >> .config
-echo "CONFIG_PACKAGE_luci-app-eoip=y" >> .config
+echo "CONFIG_PACKAGE_eoip=y" >> .config
+echo "CONFIG_PACKAGE_luci-proto-eoip=y" >> .config
+echo "CONFIG_PACKAGE_vxlan=y" >> .config
+echo "CONFIG_PACKAGE_luci-proto-vxlan=y" >> .config
 
 make defconfig
 
