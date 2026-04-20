@@ -1,9 +1,12 @@
 # Cache de downloads (binários pesados)
 dl/
-
+reports/
 # Código fonte do OpenWrt
 # Agora gerenciado como Git Submodule para referenciamento correto.
 # O Git rastreia o link do submodule, mas ignora os arquivos internos dele.
 
 # Logs e arquivos temporários
 *.log
+
+# Configuração local de build (não versionar)
+.config
