@@ -1,82 +1,121 @@
 # openwrt-build-tools
 
-Build and deployment workspace for OpenWrt 18.06, with scripts organized under `scripts/` and a single launcher at the repository root.
+Build/deploy toolkit for OpenWrt 18.06 with:
 
-## Structure
+- one entrypoint (`start.sh`)
+- Docker-based build environment
+- reusable router `.config` profiles
+- custom feed patch/bootstrap flow
 
-- `start.sh`: main launcher (interactive menu + direct command mode)
-- `scripts/`: operational scripts
-- `openwrt/`: local OpenWrt tree (not tracked by `openwrt-build-tools`)
-- `router-configs/`: saved router profiles (`*.config`, e.g. `my-router.config`)
-- `patches/openwrt/`: optional patches applied at build bootstrap
-- `reports/`: diagnostic reports
-- `dl/`: download cache
-
-## Main launcher
-
-Always use:
+## Quick Start
 
 ```sh
+cd /media/storage/openwrt-build-tools
 ./start.sh
 ```
 
-Direct command mode is also available:
+Or run directly:
 
 ```sh
-./start.sh docker [normal|clean] [router_name_or_config_file]
+./start.sh docker
+./start.sh docker clean
+./start.sh docker clean tplink_tl-wr740n-v6
+./start.sh backup-config
 ./start.sh ipk <ip> <package> [user]
 ./start.sh sysupgrade <ip> [user]
 ./start.sh diagnose <ip> [user] [vxlan_uci_section]
 ./start.sh patches
+```
+
+## Directory Layout
+
+- `start.sh`: main CLI (interactive menu + direct commands)
+- `scripts/`: implementation scripts
+- `openwrt/`: local OpenWrt workspace (not tracked in Git)
+- `router-configs/`: saved router profiles (`*.config`)
+- `patches/openwrt/`: OpenWrt patch set applied during bootstrap
+- `reports/`: diagnostics output
+- `dl/`: download cache (preserved on clean)
+
+## Docker Modes
+
+### Normal mode
+`./start.sh docker`
+
+- reuses existing workspace
+- does not clean sources
+- opens interactive shell in container
+- if a matching `openwrt_build` container already exists, CLI attaches/reuses it
+
+### Clean mode
+`./start.sh docker clean`
+
+- resets local OpenWrt workspace
+- reclones OpenWrt (full clone, not shallow)
+- reapplies local patches
+- updates/install feeds and bootstraps sources
+- keeps `dl/` cache
+
+When compiled tools/toolchain are detected, clean mode asks whether to remove them.  
+Press Enter/No to preserve and save rebuild time.
+
+## Router Profile Flow
+
+During `docker` and `docker clean`:
+
+- CLI asks if you want to use a specific router profile
+- profiles are loaded from `router-configs/*.config`
+- if you choose one, it is copied to `openwrt/.config`
+- if you do not choose one, `router-configs/default.config` is applied automatically (if present)
+
+You can also pass profile inline:
+
+```sh
+./start.sh docker clean tplink_tl-wr740n-v6
+./start.sh docker clean router-configs/tplink_tl-wr740n-v6.config
+```
+
+## Build Parallelism
+
+During Docker flow, CLI asks for number of CPU cores for `make`.
+
+- Enter empty value: default `make`
+- Enter value (example `40`): `make -j40`
+
+Inline override:
+
+```sh
+MAKE_JOBS=40 ./start.sh docker clean
+```
+
+## Backup Current .config
+
+```sh
 ./start.sh backup-config
 ```
 
-`docker` mode behavior:
+This reads `openwrt/.config`, detects target/profile, and writes:
 
-- `./start.sh docker`:
-Uses current binaries/workspace as-is, does not clean, and opens an interactive shell in the build container.
-- `./start.sh docker clean`:
-Deletes local `openwrt/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell. `dl/` cache is preserved.
-The OpenWrt clone is intentionally non-shallow to avoid revision-range failures in OpenWrt 18.06 version scripts.
-When compiled tools/toolchain are detected, clean mode asks whether to remove them.
-If you answer Enter/No, compiled tools/toolchain are preserved to save rebuild time.
+- `router-configs/brand_router-model.config`
+- example: `router-configs/tplink_tl-wr740n-v6.config`
 
-Router profile behavior:
+## Script Reference
 
-- On `docker` and `docker clean`, the script asks whether to prepare a specific router profile.
-- Profiles are read from `router-configs/*.config`.
-- If no specific router is selected, `router-configs/default.config` is applied automatically (when present).
-- If you select one, it is copied to `openwrt/.config` (replacing the existing one).
-- If you select one, it overrides `default.config`.
+- `scripts/docker-build.sh`: Docker orchestration and mode logic
+- `scripts/build_openwrt.sh`: in-container build/bootstrap steps
+- `scripts/apply-openwrt-patches.sh`: patch + feed setup (`feeds.conf` only)
+- `scripts/deploy-ipk.sh`: build one package and install on router
+- `scripts/deploy-sysupgrade.sh`: upload firmware + `sysupgrade -c`
+- `scripts/vxlan-diagnose.sh`: collect VXLAN diagnostics
+- `scripts/backup-router-config.sh`: export current `.config` as named profile
 
-Make jobs behavior:
+## Feed/Patch Rules
 
-- During Docker flow, the script asks how many CPU cores should be used by `make`.
-- Press Enter to keep default `make` behavior.
-- Enter a number (for example `40`) to use parallel mode (`make -j40`).
+- `feeds.conf.default` is never modified
+- only `openwrt/feeds.conf` is managed by scripts
+- custom feed is injected during patch/bootstrap flow
 
-Backup current router profile:
+## Versioning Model
 
-- `./start.sh backup-config` reads current `openwrt/.config`.
-- It detects target/profile and stores a copy in `router-configs/`.
-- File format: `brand_router-model.config` (example: `tplink_tl-wr740n-v6.config`).
-
-## Scripts in `scripts/`
-
-- `docker-build.sh`: runs build inside a Docker container
-- `build_openwrt.sh`: internal build sequence executed in the container
-- `apply-openwrt-patches.sh`: applies patches in `openwrt/` and ensures feed line in `feeds.conf`
-- `deploy-sysupgrade.sh`: uploads firmware and runs `sysupgrade -c`
-- `deploy-ipk.sh`: builds one package and installs it on the router
-- `vxlan-diagnose.sh`: collects remote VXLAN diagnostics and stores reports under `reports/`
-- `backup-router-config.sh`: saves current `openwrt/.config` as a named router profile
-
-## Custom feed notes
-
-- `feeds.conf.default` is **never modified** by this flow.
-- `apply-openwrt-patches.sh` manages only `openwrt/feeds.conf`.
-
-## Versioning model
-
-- `openwrt-build-tools` tracks only automation (scripts, patches, docs).
-- `openwrt/` is always rebuilt from official clone + local patch application.
+- This repository tracks automation, patches, and docs
+- `openwrt/` is treated as disposable local workspace
