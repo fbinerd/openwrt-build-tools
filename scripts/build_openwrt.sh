@@ -11,6 +11,12 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 PATCH_DIR="${PATCH_DIR:-$PROJECT_DIR/patches/openwrt}"
 DL_CACHE_DIR="${DL_CACHE_DIR:-/home/developer/dl_cache}"
+MODE="${OWT_MODE:-normal}"
+
+if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
+    echo "ERROR: invalid OWT_MODE '$MODE' (expected normal or clean)."
+    exit 1
+fi
 
 # Enter local OpenWrt source tree
 cd "$OPENWRT_DIR"
@@ -22,15 +28,24 @@ if [ ! -f "Makefile" ]; then
     exit 1
 fi
 
-echo "--- Step 0.1: Applying local patches in openwrt ---"
-"$PROJECT_DIR/scripts/apply-openwrt-patches.sh" "$OPENWRT_DIR" "$PATCH_DIR"
-
 # Link external download cache
 if [ ! -L dl ]; then
     echo "--- Linking external download cache ---"
     rm -rf dl
     ln -s "$DL_CACHE_DIR" dl
 fi
+
+if [ "$MODE" = "normal" ]; then
+    echo "--- Normal mode: reusing existing workspace without cleanup/bootstrap ---"
+    echo "Workspace mounted at: $OPENWRT_DIR"
+    echo "Download cache at: $DL_CACHE_DIR"
+    echo "Opening interactive shell."
+    exec /bin/bash
+fi
+
+echo "--- Clean mode: bootstrapping from fresh clone and applying patches ---"
+echo "--- Step 0.1: Applying local patches in openwrt ---"
+"$PROJECT_DIR/scripts/apply-openwrt-patches.sh" "$OPENWRT_DIR" "$PATCH_DIR"
 
 echo "--- Step 1: Updating feeds ---"
 ./scripts/feeds update -a

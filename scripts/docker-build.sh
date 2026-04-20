@@ -17,15 +17,17 @@ OPENWRT_REPO_URL="${OPENWRT_REPO_URL:-https://github.com/openwrt/openwrt.git}"
 OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-18.06}"
 CONTAINER_PROJECT_DIR="${CONTAINER_PROJECT_DIR:-/home/developer/project}"
 CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
+MODE="${1:-normal}"
+
+if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
+    echo "Usage: $0 [normal|clean]"
+    exit 1
+fi
 
 # 1) Optional clean mode
-if [ "${1:-}" == "clean" ]; then
-    echo "'clean' mode detected. Resetting local openwrt workspace..."
-    if [ -d "$OPENWRT_SRC/.git" ] || [ -f "$OPENWRT_SRC/.git" ]; then
-        cd "$OPENWRT_SRC" && git clean -fdx && git restore . && cd ..
-    else
-        rm -rf "$OPENWRT_SRC" && mkdir -p "$OPENWRT_SRC"
-    fi
+if [ "$MODE" = "clean" ]; then
+    echo "'clean' mode detected. Removing local OpenWrt workspace and download cache..."
+    rm -rf "$OPENWRT_SRC" "$DOWNLOAD_DIR"
 fi
 
 # Auto-install Docker if missing
@@ -79,6 +81,7 @@ $DOCKER_CMD run --rm -it \
     -v "$PROJECT_DIR":"$CONTAINER_PROJECT_DIR" \
     -v "$DOWNLOAD_DIR":"$CONTAINER_DL_CACHE_DIR" \
     -e DL_CACHE_DIR="$CONTAINER_DL_CACHE_DIR" \
+    -e OWT_MODE="$MODE" \
     -w "$CONTAINER_PROJECT_DIR" \
     --name openwrt_build \
     openwrt-18.06-builder \
