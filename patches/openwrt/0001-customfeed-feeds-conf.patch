@@ -4,4 +4,4 @@ index 0000000..c740ea1
 --- /dev/null
 +++ b/feeds.conf
 @@ -0,0 +1 @@
-+src-git customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06
++src-git-full customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06

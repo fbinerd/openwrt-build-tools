@@ -6,7 +6,7 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 OPENWRT_DIR="${1:-$PROJECT_DIR/openwrt}"
 PATCH_DIR="${2:-$PROJECT_DIR/patches/openwrt}"
-CUSTOM_FEED_LINE="src-git customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06"
+CUSTOM_FEED_LINE="src-git-full customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06"
 
 if [ ! -d "$OPENWRT_DIR" ]; then
     echo "ERROR: OpenWrt directory not found: $OPENWRT_DIR"
