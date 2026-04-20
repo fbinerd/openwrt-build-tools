@@ -20,7 +20,7 @@ print_help() {
     cat <<'EOT'
 Usage:
   ./start.sh                  # open interactive menu
-  ./start.sh docker [clean]   # run Docker build
+  ./start.sh docker [normal|clean] [router_name_or_config_file]
   ./start.sh ipk <ip> <pkg> [user]
   ./start.sh sysupgrade <ip> [user]
   ./start.sh diagnose <ip> [user] [vxlan_uci_section]
@@ -30,7 +30,7 @@ EOT
 
 if [ "${1:-}" = "docker" ]; then
     shift
-    run_script "docker-build.sh" "${1:-}"
+    run_script "docker-build.sh" "$@"
     exit 0
 fi
 

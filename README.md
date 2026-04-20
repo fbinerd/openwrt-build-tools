@@ -7,6 +7,7 @@ Build and deployment workspace for OpenWrt 18.06, with scripts organized under `
 - `start.sh`: main launcher (interactive menu + direct command mode)
 - `scripts/`: operational scripts
 - `openwrt/`: local OpenWrt tree (not tracked by `openwrt-build-tools`)
+- `router-configs/`: saved router profiles (`*.config`, e.g. `my-router.config`)
 - `patches/openwrt/`: optional patches applied at build bootstrap
 - `reports/`: diagnostic reports
 - `dl/`: download cache
@@ -22,7 +23,7 @@ Always use:
 Direct command mode is also available:
 
 ```sh
-./start.sh docker [clean]
+./start.sh docker [normal|clean] [router_name_or_config_file]
 ./start.sh ipk <ip> <package> [user]
 ./start.sh sysupgrade <ip> [user]
 ./start.sh diagnose <ip> [user] [vxlan_uci_section]
@@ -35,6 +36,13 @@ Direct command mode is also available:
 Uses current binaries/workspace as-is, does not clean, and opens an interactive shell in the build container.
 - `./start.sh docker clean`:
 Deletes local `openwrt/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell. `dl/` cache is preserved.
+
+Router profile behavior:
+
+- On `docker` and `docker clean`, the script asks whether to prepare a specific router profile.
+- Profiles are read from `router-configs/*.config`.
+- If you select one, it is copied to `openwrt/.config` (replacing the existing one).
+- If you press Enter or choose none, behavior remains unchanged.
 
 ## Scripts in `scripts/`
 

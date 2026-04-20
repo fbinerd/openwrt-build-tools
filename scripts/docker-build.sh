@@ -18,9 +18,11 @@ OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-18.06}"
 CONTAINER_PROJECT_DIR="${CONTAINER_PROJECT_DIR:-/home/developer/project}"
 CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
 MODE="${1:-normal}"
+ROUTER_CONFIGS_DIR="${ROUTER_CONFIGS_DIR:-$PROJECT_DIR/router-configs}"
+SELECTED_ROUTER_CONFIG="${2:-}"
 
 if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
-    echo "Usage: $0 [normal|clean]"
+    echo "Usage: $0 [normal|clean] [router_name_or_config_file]"
     exit 1
 fi
 
@@ -64,15 +66,107 @@ if [ "$MODE" = "normal" ]; then
     fi
 fi
 
+# Optional router profile selection (interactive when not explicitly provided)
+pick_router_config_interactive() {
+    local files=()
+    local i
+    local answer
+    local choice
+
+    mkdir -p "$ROUTER_CONFIGS_DIR"
+
+    mapfile -t files < <(find "$ROUTER_CONFIGS_DIR" -maxdepth 1 -type f -name '*.config' -printf '%f\n' | sort)
+
+    read -rp "Do you want to prepare a specific router config? [y/N]: " answer
+    case "$answer" in
+        y|Y|yes|YES)
+            ;;
+        *)
+            SELECTED_ROUTER_CONFIG=""
+            return 0
+            ;;
+    esac
+
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No .config files found in $ROUTER_CONFIGS_DIR"
+        echo "Tip: add files like 'my-router.config' to that folder."
+        SELECTED_ROUTER_CONFIG=""
+        return 0
+    fi
+
+    echo "Available router profiles:"
+    for i in "${!files[@]}"; do
+        printf "  %d) %s\n" "$((i + 1))" "${files[$i]%.config}"
+    done
+    echo "  0) none (keep current behavior)"
+
+    read -rp "Choose a profile number (Enter = none): " choice
+    if [ -z "$choice" ] || [ "$choice" = "0" ]; then
+        SELECTED_ROUTER_CONFIG=""
+        return 0
+    fi
+
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#files[@]}" ]; then
+        echo "Invalid selection. Continuing without router profile."
+        SELECTED_ROUTER_CONFIG=""
+        return 0
+    fi
+
+    SELECTED_ROUTER_CONFIG="${files[$((choice - 1))]}"
+}
+
+resolve_router_config_path() {
+    local arg="$1"
+    local path=""
+
+    [ -z "$arg" ] && return 0
+
+    if [ -f "$arg" ]; then
+        path="$arg"
+    elif [ -f "$ROUTER_CONFIGS_DIR/$arg" ]; then
+        path="$ROUTER_CONFIGS_DIR/$arg"
+    elif [ -f "$ROUTER_CONFIGS_DIR/$arg.config" ]; then
+        path="$ROUTER_CONFIGS_DIR/$arg.config"
+    fi
+
+    if [ -z "$path" ]; then
+        echo "ERROR: router config not found: $arg"
+        echo "Checked:"
+        echo "  - $arg"
+        echo "  - $ROUTER_CONFIGS_DIR/$arg"
+        echo "  - $ROUTER_CONFIGS_DIR/$arg.config"
+        exit 1
+    fi
+
+    SELECTED_ROUTER_CONFIG="$path"
+}
+
 # Ensure host cache/work dirs exist
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
+mkdir -p "$ROUTER_CONFIGS_DIR"
 
 # Ensure OpenWrt source exists (official clone)
 if [ ! -f "$OPENWRT_SRC/Makefile" ]; then
     echo "--- Cloning OpenWrt (${OPENWRT_BRANCH}) into $OPENWRT_SRC ---"
     rm -rf "$OPENWRT_SRC"
     git clone --depth 1 --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO_URL" "$OPENWRT_SRC"
+fi
+
+if [ -n "$SELECTED_ROUTER_CONFIG" ]; then
+    resolve_router_config_path "$SELECTED_ROUTER_CONFIG"
+else
+    pick_router_config_interactive
+fi
+
+if [ -n "$SELECTED_ROUTER_CONFIG" ]; then
+    if [ -f "$SELECTED_ROUTER_CONFIG" ]; then
+        cp "$SELECTED_ROUTER_CONFIG" "$OPENWRT_SRC/.config"
+        echo "Applied router profile: $SELECTED_ROUTER_CONFIG -> $OPENWRT_SRC/.config"
+    else
+        cp "$ROUTER_CONFIGS_DIR/$SELECTED_ROUTER_CONFIG" "$OPENWRT_SRC/.config"
+        echo "Applied router profile: $ROUTER_CONFIGS_DIR/$SELECTED_ROUTER_CONFIG -> $OPENWRT_SRC/.config"
+    fi
 fi
 
 chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
