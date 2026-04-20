@@ -43,8 +43,9 @@ Router profile behavior:
 
 - On `docker` and `docker clean`, the script asks whether to prepare a specific router profile.
 - Profiles are read from `router-configs/*.config`.
+- If no specific router is selected, `router-configs/default.config` is applied automatically (when present).
 - If you select one, it is copied to `openwrt/.config` (replacing the existing one).
-- If you press Enter or choose none, behavior remains unchanged.
+- If you select one, it overrides `default.config`.
 
 Make jobs behavior:
 

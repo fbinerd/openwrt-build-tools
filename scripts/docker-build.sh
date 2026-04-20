@@ -20,6 +20,7 @@ CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
 MODE="${1:-normal}"
 ROUTER_CONFIGS_DIR="${ROUTER_CONFIGS_DIR:-$PROJECT_DIR/router-configs}"
 SELECTED_ROUTER_CONFIG="${2:-}"
+DEFAULT_ROUTER_CONFIG="${DEFAULT_ROUTER_CONFIG:-$ROUTER_CONFIGS_DIR/default.config}"
 MAKE_JOBS="${MAKE_JOBS:-}"
 
 if [ "$MODE" != "normal" ] && [ "$MODE" != "clean" ]; then
@@ -189,6 +190,13 @@ if [ -n "$SELECTED_ROUTER_CONFIG" ]; then
         cp "$ROUTER_CONFIGS_DIR/$SELECTED_ROUTER_CONFIG" "$OPENWRT_SRC/.config"
         echo "Applied router profile: $ROUTER_CONFIGS_DIR/$SELECTED_ROUTER_CONFIG -> $OPENWRT_SRC/.config"
     fi
+elif [ -f "$DEFAULT_ROUTER_CONFIG" ]; then
+    cp "$DEFAULT_ROUTER_CONFIG" "$OPENWRT_SRC/.config"
+    echo "Applied default profile: $DEFAULT_ROUTER_CONFIG -> $OPENWRT_SRC/.config"
+else
+    echo "No router profile selected and default profile not found:"
+    echo "  $DEFAULT_ROUTER_CONFIG"
+    echo "Continuing with existing OpenWrt .config."
 fi
 
 if [ -z "$MAKE_JOBS" ]; then
