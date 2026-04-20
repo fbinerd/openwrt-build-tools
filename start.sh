@@ -23,6 +23,8 @@ Usage:
   ./start.sh docker [normal|clean] [router_name_or_config_file]
   ./start.sh ipk <ip> <pkg> [user]
   ./start.sh sysupgrade <ip> [user]
+  ./start.sh deploy-ipk <ip> <pkg> [user]
+  ./start.sh deploy-sysupgrade <ip> [user]
   ./start.sh diagnose <ip> [user] [vxlan_uci_section]
   ./start.sh patches          # apply patches in openwrt
   ./start.sh backup-config    # backup openwrt/.config to router-configs/
@@ -42,7 +44,19 @@ if [ "${1:-}" = "ipk" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "deploy-ipk" ]; then
+    shift
+    run_script "deploy-ipk.sh" "$@"
+    exit 0
+fi
+
 if [ "${1:-}" = "sysupgrade" ]; then
+    shift
+    run_script "deploy-sysupgrade.sh" "$@"
+    exit 0
+fi
+
+if [ "${1:-}" = "deploy-sysupgrade" ]; then
     shift
     run_script "deploy-sysupgrade.sh" "$@"
     exit 0
@@ -101,20 +115,20 @@ EOT
             ;;
         3)
             read -rp "Router IP: " ip
-            read -rp "SSH user [root]: " user
+            read -rp "SSH username (login user) [root]: " user
             user="${user:-root}"
             run_script "deploy-sysupgrade.sh" "$ip" "$user"
             ;;
         4)
             read -rp "Router IP: " ip
             read -rp "Package name (e.g. eoip): " pkg
-            read -rp "SSH user [root]: " user
+            read -rp "SSH username (login user) [root]: " user
             user="${user:-root}"
             run_script "deploy-ipk.sh" "$ip" "$pkg" "$user"
             ;;
         5)
             read -rp "Router IP: " ip
-            read -rp "SSH user [root]: " user
+            read -rp "SSH username (login user) [root]: " user
             user="${user:-root}"
             read -rp "VXLAN UCI section (optional): " sec
             if [ -n "$sec" ]; then

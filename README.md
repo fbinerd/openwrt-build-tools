@@ -24,6 +24,8 @@ Or run directly:
 ./start.sh purge
 ./start.sh ipk <ip> <package> [user]
 ./start.sh sysupgrade <ip> [user]
+./start.sh deploy-ipk <ip> <package> [user]
+./start.sh deploy-sysupgrade <ip> [user]
 ./start.sh diagnose <ip> [user] [vxlan_uci_section]
 ./start.sh patches
 ```
