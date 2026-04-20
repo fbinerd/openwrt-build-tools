@@ -52,6 +52,18 @@ else
     fi
 fi
 
+if [ "$MODE" = "normal" ]; then
+    if $DOCKER_CMD ps --format '{{.Names}}' | grep -qx 'openwrt_build'; then
+        echo "Container 'openwrt_build' is already running. Opening shell..."
+        exec $DOCKER_CMD exec -it openwrt_build /bin/bash
+    fi
+
+    if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx 'openwrt_build'; then
+        echo "Container 'openwrt_build' exists but is stopped. Starting and attaching..."
+        exec $DOCKER_CMD start -ai openwrt_build
+    fi
+fi
+
 # Ensure host cache/work dirs exist
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
@@ -77,6 +89,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # 3) Run container build
+if [ "$MODE" = "clean" ] && $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx 'openwrt_build'; then
+    echo "Found existing container 'openwrt_build'. Removing it (clean mode)..."
+    $DOCKER_CMD rm -f openwrt_build >/dev/null
+fi
+
 $DOCKER_CMD run --rm -it \
     -v "$PROJECT_DIR":"$CONTAINER_PROJECT_DIR" \
     -v "$DOWNLOAD_DIR":"$CONTAINER_DL_CACHE_DIR" \
@@ -86,5 +103,11 @@ $DOCKER_CMD run --rm -it \
     --name openwrt_build \
     openwrt-18.06-builder \
     scripts/build_openwrt.sh
+
+RUN_RC=$?
+if [ $RUN_RC -ne 0 ]; then
+    echo "Container run failed with exit code $RUN_RC."
+    exit $RUN_RC
+fi
 
 echo "Leaving OpenWrt build environment."
