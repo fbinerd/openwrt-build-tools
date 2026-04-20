@@ -169,7 +169,10 @@ mkdir -p "$ROUTER_CONFIGS_DIR"
 if [ ! -f "$OPENWRT_SRC/Makefile" ]; then
     echo "--- Cloning OpenWrt (${OPENWRT_BRANCH}) into $OPENWRT_SRC ---"
     rm -rf "$OPENWRT_SRC"
-    git clone --depth 1 --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO_URL" "$OPENWRT_SRC"
+    # OpenWrt 18.06 getver.sh uses a fixed historical base commit (REBOOT=...).
+    # Do not use shallow clone, otherwise that commit may be missing and cause:
+    # "fatal: Invalid revision range ...".
+    git clone --branch "$OPENWRT_BRANCH" "$OPENWRT_REPO_URL" "$OPENWRT_SRC"
 fi
 
 if [ -n "$SELECTED_ROUTER_CONFIG" ]; then

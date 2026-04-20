@@ -36,6 +36,7 @@ Direct command mode is also available:
 Uses current binaries/workspace as-is, does not clean, and opens an interactive shell in the build container.
 - `./start.sh docker clean`:
 Deletes local `openwrt/`, reclones OpenWrt, reapplies patches, refreshes feeds/download bootstrap, then opens an interactive shell. `dl/` cache is preserved.
+The OpenWrt clone is intentionally non-shallow to avoid revision-range failures in OpenWrt 18.06 version scripts.
 
 Router profile behavior:
 
