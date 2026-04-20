@@ -3,16 +3,19 @@
 # Força o uso do BuildKit para evitar erros de comunicação (closed pipe)
 export DOCKER_BUILDKIT=1
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Captura o UID e GID reais de quem chamou o script, mesmo se usar sudo
 REAL_UID=${SUDO_UID:-$(id -u)}
 REAL_GID=${SUDO_GID:-$(id -g)}
 
 # Caminhos
-OPENWRT_SRC="$(pwd)/openwrt"
-DOWNLOAD_DIR="$(pwd)/dl"
+OPENWRT_SRC="$PROJECT_DIR/openwrt"
+DOWNLOAD_DIR="$PROJECT_DIR/dl"
 
 # 1. Tratamento do atributo 'clean'
-if [ "$1" == "clean" ]; then
+if [ "${1:-}" == "clean" ]; then
     echo "Ação 'clean' detectada. Resetando repositório openwrt..."
     # Em submodules, é melhor usar o git clean do que apagar a pasta
     if [ -d "$OPENWRT_SRC/.git" ] || [ -f "$OPENWRT_SRC/.git" ]; then
@@ -58,12 +61,13 @@ if [ ! -f "$OPENWRT_SRC/Makefile" ]; then
 fi
 
 # Garante que o script de automação interna tem permissão de execução
-chmod +x build_openwrt.sh
+chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
 
 # 1. Constrói a imagem Docker (procura o Dockerfile na pasta atual)
 $DOCKER_CMD build -t openwrt-18.06-builder \
     --build-arg USER_ID="$REAL_UID" \
-    --build-arg GROUP_ID="$REAL_GID" .
+    --build-arg GROUP_ID="$REAL_GID" \
+    "$PROJECT_DIR"
 
 if [ $? -ne 0 ]; then
     echo "Erro na construção da imagem. Verifique as mensagens acima."
@@ -73,10 +77,10 @@ fi
 # 2. Executa o container
 # Mapeia a pasta atual (raiz) e a pasta de downloads separadamente para persistência
 $DOCKER_CMD run --rm -it \
-    -v "$(pwd)":/home/developer/project \
+    -v "$PROJECT_DIR":/home/developer/project \
     -v "$DOWNLOAD_DIR":/home/developer/dl_cache \
     --name openwrt_build \
     openwrt-18.06-builder \
-    /home/developer/project/build_openwrt.sh
+    /home/developer/project/scripts/build_openwrt.sh
 
 echo "Saindo do ambiente de compilação OpenWrt."

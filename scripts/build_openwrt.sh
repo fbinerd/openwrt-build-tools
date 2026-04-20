@@ -16,6 +16,9 @@ if [ ! -f "Makefile" ]; then
     exit 1
 fi
 
+echo "--- Passo 0.1: Aplicando patches locais em openwrt ---"
+/home/developer/project/scripts/apply-openwrt-patches.sh /home/developer/project/openwrt /home/developer/project/patches/openwrt
+
 # Cria o link simbólico para a pasta de downloads montada em local neutro
 if [ ! -L dl ]; then
     echo "--- Vinculando pasta de downloads externa ---"
