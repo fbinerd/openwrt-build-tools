@@ -2,15 +2,15 @@
 set -euo pipefail
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-    echo "Uso: $0 <ip_do_roteador> <nome_do_pacote> [usuario_ssh]"
-    echo "Exemplo: $0 10.0.4.123 eoip"
+    echo "Usage: $0 <router_ip> <package_name> [ssh_user]"
+    echo "Example: $0 10.0.4.123 eoip"
     echo
-    echo "Variaveis opcionais:"
-    echo "  ROUTER_PASS=<senha>        (padrao: r0ut3r)"
-    echo "  OPENWRT_DIR=<path>         (padrao: <repo>/openwrt)"
-    echo "  JOBS=<n>                   (padrao: nproc)"
-    echo "  NO_CLEAN=1                 (nao roda target clean)"
-    echo "  PKG_TARGET=<target_make>   (ex.: package/feeds/customfeed/eoip)"
+    echo "Optional environment variables:"
+    echo "  ROUTER_PASS=<password>     (default: r0ut3r)"
+    echo "  OPENWRT_DIR=<path>         (default: <repo>/openwrt)"
+    echo "  JOBS=<n>                   (default: nproc)"
+    echo "  NO_CLEAN=1                 (skip clean target)"
+    echo "  PKG_TARGET=<make_target>   (e.g.: package/feeds/customfeed/eoip)"
     exit 1
 fi
 
@@ -31,12 +31,12 @@ SSH_OPTS=(
 SCP_OPTS=(-O)
 
 if ! [[ "$ROUTER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    echo "IP invalido: $ROUTER_IP"
+    echo "Invalid IP: $ROUTER_IP"
     exit 1
 fi
 
 if [ ! -d "$OPENWRT_DIR" ]; then
-    echo "Diretorio OpenWrt nao encontrado: $OPENWRT_DIR"
+    echo "OpenWrt directory not found: $OPENWRT_DIR"
     exit 1
 fi
 
@@ -63,7 +63,7 @@ find_pkg_target() {
 
 TARGET_BASE="$(find_pkg_target "$PACKAGE")"
 
-echo "Compilando pacote '$PACKAGE' usando target '$TARGET_BASE' ..."
+echo "Building package '$PACKAGE' using target '$TARGET_BASE' ..."
 cd "$OPENWRT_DIR"
 
 if [ "${NO_CLEAN:-0}" = "1" ]; then
@@ -76,22 +76,22 @@ IPK="$(find "$OPENWRT_DIR/bin/packages" -type f -name "${PACKAGE}_*.ipk" ! -name
     | sort -n | tail -n1 | cut -d' ' -f2-)"
 
 if [ -z "${IPK:-}" ] || [ ! -f "$IPK" ]; then
-    echo "Nao encontrei IPK para '$PACKAGE' em $OPENWRT_DIR/bin/packages"
-    echo "Dica: informe o target manual com PKG_TARGET=..."
+    echo "Could not find IPK for '$PACKAGE' in $OPENWRT_DIR/bin/packages"
+    echo "Tip: provide target manually with PKG_TARGET=..."
     exit 1
 fi
 
 REMOTE_IPK="/tmp/$(basename "$IPK")"
 
-echo "Enviando IPK: $IPK -> ${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
+echo "Uploading IPK: $IPK -> ${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
 if command -v sshpass >/dev/null 2>&1; then
     SSHPASS="$ROUTER_PASS" sshpass -e scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IPK" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
 else
-    echo "Aviso: 'sshpass' nao encontrado, sera solicitada senha no terminal."
+    echo "Warning: 'sshpass' not found, password will be requested in terminal."
     scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IPK" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IPK}"
 fi
 
-echo "Instalando pacote no roteador ..."
+echo "Installing package on router ..."
 REMOTE_CMD="opkg install --force-reinstall '${REMOTE_IPK}' && opkg list-installed | grep '^${PACKAGE} ' || true"
 if command -v sshpass >/dev/null 2>&1; then
     SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD"
@@ -99,4 +99,4 @@ else
     ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "$REMOTE_CMD"
 fi
 
-echo "Concluido."
+echo "Done."

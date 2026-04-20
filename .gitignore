@@ -1,12 +1,12 @@
-# Build/cache locais
-dl/
-reports/
+# Local build/cache
+/dl/
+/reports/
 
-# Workspace local do OpenWrt na raiz (sempre recriado por clone oficial)
+# Local OpenWrt workspace at repository root (always recreated from official clone)
 /openwrt/
 
-# Logs e temporários
+# Logs and temporary files
 *.log
 
-# Configuração local (não versionar)
+# Local config (do not version)
 .config

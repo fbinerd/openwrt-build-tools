@@ -1,49 +1,49 @@
 # openwrt-build-tools
 
-Workspace de build e deploy para OpenWrt 18.06, com organização de scripts em `scripts/` e um launcher único na raiz.
+Build and deployment workspace for OpenWrt 18.06, with scripts organized under `scripts/` and a single launcher at the repository root.
 
-## Estrutura
+## Structure
 
-- `start.sh`: launcher principal (menu interativo + modo por comando)
-- `scripts/`: scripts operacionais
-- `openwrt/`: árvore local do OpenWrt (não versionada no `openwrt-build-tools`)
-- `patches/openwrt/`: patches opcionais aplicados no início do build
-- `reports/`: relatórios de diagnóstico
-- `dl/`: cache de downloads
+- `start.sh`: main launcher (interactive menu + direct command mode)
+- `scripts/`: operational scripts
+- `openwrt/`: local OpenWrt tree (not tracked by `openwrt-build-tools`)
+- `patches/openwrt/`: optional patches applied at build bootstrap
+- `reports/`: diagnostic reports
+- `dl/`: download cache
 
-## Launcher principal
+## Main launcher
 
-Use sempre:
+Always use:
 
 ```sh
 ./start.sh
 ```
 
-Também funciona por comando direto:
+Direct command mode is also available:
 
 ```sh
 ./start.sh docker [clean]
-./start.sh ipk <ip> <pacote> [usuario]
-./start.sh sysupgrade <ip> [usuario]
-./start.sh diagnose <ip> [usuario] [secao_uci_vxlan]
+./start.sh ipk <ip> <package> [user]
+./start.sh sysupgrade <ip> [user]
+./start.sh diagnose <ip> [user] [vxlan_uci_section]
 ./start.sh patches
 ```
 
-## Scripts em `scripts/`
+## Scripts in `scripts/`
 
-- `docker-build.sh`: build dentro de container
-- `build_openwrt.sh`: sequência interna de build executada no container
-- `apply-openwrt-patches.sh`: aplica patches em `openwrt/` e garante feed em `feeds.conf`
-- `deploy-sysupgrade.sh`: envia firmware e executa `sysupgrade -c`
-- `deploy-ipk.sh`: compila um pacote e instala no roteador
-- `vxlan-diagnose.sh`: coleta diagnóstico VXLAN remoto e salva em `reports/`
+- `docker-build.sh`: runs build inside a Docker container
+- `build_openwrt.sh`: internal build sequence executed in the container
+- `apply-openwrt-patches.sh`: applies patches in `openwrt/` and ensures feed line in `feeds.conf`
+- `deploy-sysupgrade.sh`: uploads firmware and runs `sysupgrade -c`
+- `deploy-ipk.sh`: builds one package and installs it on the router
+- `vxlan-diagnose.sh`: collects remote VXLAN diagnostics and stores reports under `reports/`
 
-## Notas sobre feed customizado
+## Custom feed notes
 
-- `feeds.conf.default` **não é alterado** pelo fluxo de patches.
-- O script `apply-openwrt-patches.sh` gerencia apenas `openwrt/feeds.conf`.
+- `feeds.conf.default` is **never modified** by this flow.
+- `apply-openwrt-patches.sh` manages only `openwrt/feeds.conf`.
 
-## Versionamento
+## Versioning model
 
-- O repositório `openwrt-build-tools` versiona apenas automação (scripts, patches e documentação).
-- A pasta `openwrt/` é sempre reconstruída por clone oficial + aplicação de patches.
+- `openwrt-build-tools` tracks only automation (scripts, patches, docs).
+- `openwrt/` is always rebuilt from official clone + local patch application.

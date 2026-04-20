@@ -1,51 +1,54 @@
 #!/bin/bash
 set -euo pipefail
 
-OPENWRT_DIR="${1:-/home/developer/project/openwrt}"
-PATCH_DIR="${2:-/home/developer/project/patches/openwrt}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+OPENWRT_DIR="${1:-$PROJECT_DIR/openwrt}"
+PATCH_DIR="${2:-$PROJECT_DIR/patches/openwrt}"
 CUSTOM_FEED_LINE="src-git customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06"
 
 if [ ! -d "$OPENWRT_DIR" ]; then
-    echo "ERRO: diretorio OpenWrt nao encontrado: $OPENWRT_DIR"
+    echo "ERROR: OpenWrt directory not found: $OPENWRT_DIR"
     exit 1
 fi
 
 if [ ! -d "$PATCH_DIR" ]; then
-    echo "INFO: diretorio de patches nao existe: $PATCH_DIR"
+    echo "INFO: patch directory not found: $PATCH_DIR"
 fi
 
-# 1) Aplicar patches (se houver)
+# 1) Apply patches (if any)
 shopt -s nullglob
 PATCHES=( "$PATCH_DIR"/*.patch )
 shopt -u nullglob
 
 if [ ${#PATCHES[@]} -gt 0 ]; then
-    echo "Aplicando patches de $PATCH_DIR ..."
+    echo "Applying patches from $PATCH_DIR ..."
     for p in "${PATCHES[@]}"; do
         patch_name="$(basename "$p")"
         echo "- Patch: $patch_name"
 
         if (cd "$OPENWRT_DIR" && patch --dry-run -p1 < "$p" >/dev/null 2>&1); then
             (cd "$OPENWRT_DIR" && patch -p1 < "$p" >/dev/null)
-            echo "  aplicado"
+            echo "  applied"
             continue
         fi
 
         if (cd "$OPENWRT_DIR" && patch -R --dry-run -p1 < "$p" >/dev/null 2>&1); then
-            echo "  ja aplicado (skip)"
+            echo "  already applied (skip)"
             continue
         fi
 
-        echo "ERRO: nao foi possivel aplicar $p"
+        echo "ERROR: failed to apply $p"
         (cd "$OPENWRT_DIR" && patch --dry-run -p1 < "$p") || true
         exit 1
     done
 else
-    echo "INFO: nenhum patch encontrado em $PATCH_DIR"
+    echo "INFO: no patches found in $PATCH_DIR"
 fi
 
-# 2) Nunca tocar em feeds.conf.default.
-# Garantir somente feeds.conf com o feed customizado.
+# 2) Never modify feeds.conf.default.
+# Only ensure feeds.conf contains the custom feed.
 if [ ! -f "$OPENWRT_DIR/feeds.conf" ]; then
     if [ -f "$OPENWRT_DIR/feeds.conf.default" ]; then
         cp "$OPENWRT_DIR/feeds.conf.default" "$OPENWRT_DIR/feeds.conf"
@@ -60,5 +63,5 @@ sed -i \
     "$OPENWRT_DIR/feeds.conf"
 printf '%s\n' "$CUSTOM_FEED_LINE" >> "$OPENWRT_DIR/feeds.conf"
 
-echo "feeds.conf atualizado com customfeed."
-echo "Patches processados com sucesso."
+echo "feeds.conf updated with customfeed."
+echo "Patch processing completed successfully."

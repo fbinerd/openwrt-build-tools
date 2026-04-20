@@ -2,8 +2,8 @@
 set -euo pipefail
 
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Uso: $0 <ip_do_roteador> [usuario_ssh]"
-    echo "Exemplo: $0 10.0.4.123"
+    echo "Usage: $0 <router_ip> [ssh_user]"
+    echo "Example: $0 10.0.4.123"
     exit 1
 fi
 
@@ -24,29 +24,29 @@ SCP_OPTS=(
 )
 
 if ! [[ "$ROUTER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    echo "IP invalido: $ROUTER_IP"
+    echo "Invalid IP: $ROUTER_IP"
     exit 1
 fi
 
 if [ ! -f "$IMAGE" ]; then
-    echo "Imagem nao encontrada:"
+    echo "Image not found:"
     echo "  $IMAGE"
     exit 1
 fi
 
-echo "Enviando firmware para ${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE} ..."
+echo "Uploading firmware to ${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE} ..."
 if command -v sshpass >/dev/null 2>&1; then
     SSHPASS="$ROUTER_PASS" sshpass -e scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IMAGE" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE}"
 else
-    echo "Aviso: 'sshpass' nao encontrado, sera solicitada senha no terminal."
+    echo "Warning: 'sshpass' not found, password will be requested in terminal."
     scp "${SCP_OPTS[@]}" "${SSH_OPTS[@]}" "$IMAGE" "${SSH_USER}@${ROUTER_IP}:${REMOTE_IMAGE}"
 fi
 
-echo "Executando sysupgrade com preservacao de configuracoes (-c)..."
+echo "Running sysupgrade with config preservation (-c) ..."
 if command -v sshpass >/dev/null 2>&1; then
     SSHPASS="$ROUTER_PASS" sshpass -e ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "sysupgrade -c '${REMOTE_IMAGE}'"
 else
     ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ROUTER_IP}" "sysupgrade -c '${REMOTE_IMAGE}'"
 fi
 
-echo "Comando enviado. O roteador deve reiniciar em seguida."
+echo "Command sent. Router should reboot next."

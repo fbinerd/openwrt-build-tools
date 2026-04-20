@@ -2,9 +2,9 @@
 set -euo pipefail
 
 if [ $# -lt 1 ] || [ $# -gt 3 ]; then
-    echo "Uso: $0 <ip_do_roteador> [usuario_ssh] [secao_uci_vxlan]"
-    echo "Exemplo: $0 10.0.4.123"
-    echo "Exemplo: $0 10.0.4.123 root vxlan"
+    echo "Usage: $0 <router_ip> [ssh_user] [vxlan_uci_section]"
+    echo "Example: $0 10.0.4.123"
+    echo "Example: $0 10.0.4.123 root vxlan"
     exit 1
 fi
 
@@ -109,70 +109,70 @@ analyze_report() {
     local current_errors=0
 
     echo
-    echo "===== DIAGNOSTICO AUTOMATICO ====="
+    echo "===== AUTOMATIC DIAGNOSIS ====="
 
     if ! grep -q "/lib/netifd/proto/vxlan.sh" "$f"; then
-        echo "- Falta o script de protocolo: /lib/netifd/proto/vxlan.sh"
+        echo "- Missing protocol script: /lib/netifd/proto/vxlan.sh"
         problems=$((problems + 1))
     fi
 
     if ! grep -q "^kmod-vxlan" "$f"; then
-        echo "- kmod-vxlan parece ausente (modulo kernel necessario)"
+        echo "- kmod-vxlan appears to be missing (required kernel module)"
         problems=$((problems + 1))
     fi
 
     if grep -q "No UCI sections with proto=vxlan found" "$f"; then
-        echo "- Nao existe secao UCI com proto=vxlan"
+        echo "- No UCI section with proto=vxlan exists"
         problems=$((problems + 1))
     fi
 
     if grep -q '"code": "MISSING_ADDRESS"' "$f"; then
-        echo "- Erro atual MISSING_ADDRESS: peeraddr/remote nao configurado"
+        echo "- Current error MISSING_ADDRESS: peeraddr/remote not configured"
         problems=$((problems + 1))
         current_errors=$((current_errors + 1))
     fi
 
     if grep -q '"code": "NO_WAN_LINK"' "$f"; then
-        echo "- Erro atual NO_WAN_LINK: tunlink/rota underlay indisponivel"
+        echo "- Current error NO_WAN_LINK: tunlink/underlay route unavailable"
         problems=$((problems + 1))
         current_errors=$((current_errors + 1))
     fi
 
     if grep -q '"code": "VXLAN_DNS_RESOLVE_FAILED"' "$f"; then
-        echo "- Erro atual VXLAN_DNS_RESOLVE_FAILED: hostname do peer nao resolvido"
+        echo "- Current error VXLAN_DNS_RESOLVE_FAILED: peer hostname not resolved"
         problems=$((problems + 1))
         current_errors=$((current_errors + 1))
     fi
 
     if grep -q '"up": false' "$f"; then
-        echo "- Estado atual: existe secao vxlan com up=false (ver bloco IFSTATUS)"
+        echo "- Current state: at least one vxlan section is up=false (see IFSTATUS block)"
         problems=$((problems + 1))
         current_errors=$((current_errors + 1))
     fi
 
     if grep -qE "network\\.[^.]+\\.proto='vxlan'" "$f" && grep -qE "network\\.[^.]+\\.ifname='[^']+'" "$f" && ! grep -q "proto_config_add_string \"ifname\"" "$f"; then
-        echo "- option ifname definida mas o backend /lib/netifd/proto/vxlan.sh nao suporta ifname"
+        echo "- option ifname is set but backend /lib/netifd/proto/vxlan.sh does not support ifname"
         problems=$((problems + 1))
     fi
 
     if grep -qE "network\\.[^.]+\\.proto='vxlan'" "$f" && grep -qE "network\\.[^.]+\\.tunlink='br-" "$f"; then
-        echo "- Aviso: tunlink usa device bridge (br-*). Prefira interface logica UCI (ex: 'lan'/'wwan')."
+        echo "- Warning: tunlink uses bridge device (br-*). Prefer logical UCI interface (e.g. 'lan'/'wwan')."
     fi
 
     if [ "$problems" -eq 0 ]; then
-        echo "- Nao achei erro obvio por regex; revisar IFSTATUS e LOGREAD no relatorio."
+        echo "- No obvious regex-detectable error found; review IFSTATUS and LOGREAD in report."
     elif [ "$current_errors" -eq 0 ]; then
-        echo "- Observacao: alertas vieram de heuristicas/historico; sem codigo de erro atual no IFSTATUS."
+        echo "- Note: warnings came from heuristics/history; no current IFSTATUS error code found."
     fi
 }
 
-echo "Coletando diagnostico de VXLAN em ${SSH_USER}@${ROUTER_IP} ..."
+echo "Collecting VXLAN diagnostics from ${SSH_USER}@${ROUTER_IP} ..."
 if ! collect_remote >"$REPORT_FILE"; then
-    echo "Falha ao coletar diagnostico remoto."
+    echo "Failed to collect remote diagnostics."
     exit 1
 fi
 
-echo "Relatorio salvo em:"
+echo "Report saved to:"
 echo "  $REPORT_FILE"
 
 analyze_report "$REPORT_FILE"

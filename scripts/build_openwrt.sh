@@ -1,67 +1,67 @@
 #!/bin/bash
-# Script de automação interna para o OpenWrt 18.06
+# Internal automation script for OpenWrt 18.06
 set -e
 
-# Evita prompts de credenciais para repositórios públicos
+# Disable interactive credential prompts for public repositories
 export GIT_TERMINAL_PROMPT=0
 export GIT_ASKPASS=/bin/true
 
-# Entra na pasta do código-fonte que agora é uma subpasta do projeto
-cd /home/developer/project/openwrt
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
+PATCH_DIR="${PATCH_DIR:-$PROJECT_DIR/patches/openwrt}"
+DL_CACHE_DIR="${DL_CACHE_DIR:-/home/developer/dl_cache}"
 
-# Passo 0: Verifica se o código-fonte está presente
+# Enter local OpenWrt source tree
+cd "$OPENWRT_DIR"
+
+# Step 0: verify source tree
 if [ ! -f "Makefile" ]; then
-    echo "ERRO: Pasta openwrt está vazia."
-    echo "Execute 'git submodule update --init' no host."
+    echo "ERROR: openwrt directory is empty."
+    echo "Run OpenWrt bootstrap/clone on host first."
     exit 1
 fi
 
-echo "--- Passo 0.1: Aplicando patches locais em openwrt ---"
-/home/developer/project/scripts/apply-openwrt-patches.sh /home/developer/project/openwrt /home/developer/project/patches/openwrt
+echo "--- Step 0.1: Applying local patches in openwrt ---"
+"$PROJECT_DIR/scripts/apply-openwrt-patches.sh" "$OPENWRT_DIR" "$PATCH_DIR"
 
-# Cria o link simbólico para a pasta de downloads montada em local neutro
+# Link external download cache
 if [ ! -L dl ]; then
-    echo "--- Vinculando pasta de downloads externa ---"
-    rm -rf dl # Remove diretório vazio caso o git clone o tenha criado
-    ln -s /home/developer/dl_cache dl
+    echo "--- Linking external download cache ---"
+    rm -rf dl
+    ln -s "$DL_CACHE_DIR" dl
 fi
 
-echo "--- Passo 1: Atualizando feeds ---"
+echo "--- Step 1: Updating feeds ---"
 ./scripts/feeds update -a
 
-echo "--- Passo 2: Instalando feeds ---"
+echo "--- Step 2: Installing feeds ---"
 ./scripts/feeds install -a
 
-echo "--- Passo 3: Baixando fontes base ---"
-# Garante um .config mínimo para o download inicial
+echo "--- Step 3: Downloading base sources ---"
 if [ ! -f .config ]; then
     make defconfig
 fi
 make download
 
-echo "--- Passo 4: Instalando dependência openwrt-linux-eoip (Kernel Module) ---"
+echo "--- Step 4: Installing openwrt-linux-eoip dependency (kernel module) ---"
 if [ ! -d package/openwrt-linux-eoip ]; then
-    # Conforme README: colocar em openwrt/package/
     git clone https://github.com/bogdik/openwrt-linux-eoip.git package/openwrt-linux-eoip
 fi
 
-echo "--- Passo 5: Instalando luci-app-eoip seguindo o README ---"
-# 1. Coloca o repositório no caminho do feed de LuCI
+echo "--- Step 5: Installing luci-app-eoip as described in README ---"
 mkdir -p feeds/luci/applications/luci-app-eoip
 if [ ! -d feeds/luci/applications/luci-app-eoip/.git ]; then
     git clone https://github.com/bogdik/luci-app-eoip.git feeds/luci/applications/luci-app-eoip
 fi
 
-# 2. Cria o link simbólico conforme o README
 mkdir -p package/feeds/luci/
 ln -sf ../../../feeds/luci/applications/luci-app-eoip package/feeds/luci/luci-app-eoip
 
-# Habilita os pacotes no .config
 echo "CONFIG_PACKAGE_kmod-eoip=y" >> .config
 echo "CONFIG_PACKAGE_luci-app-eoip=y" >> .config
 
-# Atualiza a configuração para validar as novas dependências
 make defconfig
 
-echo "--- Setup concluído com sucesso! ---"
+echo "--- Setup completed successfully! ---"
 exec /bin/bash
