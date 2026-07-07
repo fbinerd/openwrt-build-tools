@@ -1,6 +1,6 @@
 # openwrt-build-tools
 
-Build/deploy toolkit for OpenWrt 18.06 with:
+Build/deploy toolkit for OpenWrt 25.12 with:
 
 - one entrypoint (`start.sh`)
 - Docker-based build environment
@@ -19,14 +19,13 @@ Or run directly:
 ```sh
 ./start.sh docker
 ./start.sh docker clean
-./start.sh docker clean tplink_tl-wr740n-v6
+./start.sh docker clean my-router
 ./start.sh backup-config
 ./start.sh purge
 ./start.sh ipk <ip> <package> [user]
 ./start.sh sysupgrade <ip> [user]
 ./start.sh deploy-ipk <ip> <package> [user]
 ./start.sh deploy-sysupgrade <ip> [user]
-./start.sh diagnose <ip> [user] [vxlan_uci_section]
 ./start.sh patches
 ```
 
@@ -74,8 +73,8 @@ During `docker` and `docker clean`:
 You can also pass profile inline:
 
 ```sh
-./start.sh docker clean tplink_tl-wr740n-v6
-./start.sh docker clean router-configs/tplink_tl-wr740n-v6.config
+./start.sh docker clean my-router
+./start.sh docker clean router-configs/my-router.config
 ```
 
 ## Build Parallelism
@@ -100,7 +99,7 @@ MAKE_JOBS=40 ./start.sh docker clean
 This reads `openwrt/.config`, detects target/profile, and writes:
 
 - `router-configs/brand_router-model.config`
-- example: `router-configs/tplink_tl-wr740n-v6.config`
+- example: `router-configs/tplink_my-router.config`
 
 ## Purge Local Runtime/Cache Data
 
@@ -111,7 +110,7 @@ This reads `openwrt/.config`, detects target/profile, and writes:
 Use this when you want to stop using the project and free host resources:
 
 - removes Docker container `openwrt_build` (if present)
-- removes Docker image `openwrt-18.06-builder` (if present)
+- removes Docker image `openwrt-25.12-builder` (if present)
 - removes local `openwrt/`, `dl/`, and `reports/`
 - recreates empty `dl/` and `reports/`
 
@@ -128,7 +127,6 @@ Non-interactive mode:
 - `scripts/apply-openwrt-patches.sh`: patch + feed setup (`feeds.conf` only)
 - `scripts/deploy-ipk.sh`: build one package and install on router
 - `scripts/deploy-sysupgrade.sh`: upload firmware + `sysupgrade -c`
-- `scripts/vxlan-diagnose.sh`: collect VXLAN diagnostics
 - `scripts/backup-router-config.sh`: export current `.config` as named profile
 - `scripts/purge-workspace.sh`: purge local Docker runtime/cache/build workspace
 
@@ -136,7 +134,7 @@ Non-interactive mode:
 
 - `feeds.conf.default` is never modified
 - only `openwrt/feeds.conf` is managed by scripts
-- custom feed is injected during patch/bootstrap flow
+- custom feed injection is disabled by default, and can be enabled at runtime by setting the `ENABLE_CUSTOM_FEED=1` environment variable (e.g., `ENABLE_CUSTOM_FEED=1 ./start.sh`)
 
 ## Versioning Model
 

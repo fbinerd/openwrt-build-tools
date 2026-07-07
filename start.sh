@@ -25,7 +25,6 @@ Usage:
   ./start.sh sysupgrade <ip> [user] [password]
   ./start.sh deploy-ipk <ip> <pkg> [user] [password]
   ./start.sh deploy-sysupgrade <ip> [user] [password]
-  ./start.sh diagnose <ip> [user] [vxlan_uci_section]
   ./start.sh patches          # apply patches in openwrt
   ./start.sh backup-config    # backup openwrt/.config to router-configs/
   ./start.sh purge            # remove local docker/runtime/cache data
@@ -62,11 +61,6 @@ if [ "${1:-}" = "deploy-sysupgrade" ]; then
     exit 0
 fi
 
-if [ "${1:-}" = "diagnose" ]; then
-    shift
-    run_script "vxlan-diagnose.sh" "$@"
-    exit 0
-fi
 
 if [ "${1:-}" = "patches" ]; then
     run_script "apply-openwrt-patches.sh" "$ROOT_DIR/openwrt" "$ROOT_DIR/patches/openwrt"
@@ -97,11 +91,10 @@ while true; do
 2) Docker build (clean)
 3) Deploy sysupgrade
 4) Build + deploy IPK
-5) VXLAN diagnose
-6) Apply openwrt patches
-7) Backup router .config profile
-8) Purge local runtime/cache data
-9) Exit
+5) Apply openwrt patches
+6) Backup router .config profile
+7) Purge local runtime/cache data
+8) Exit
 EOT
 
     read -rp "Choose an option: " opt
@@ -127,26 +120,15 @@ EOT
             run_script "deploy-ipk.sh" "$ip" "$pkg" "$user"
             ;;
         5)
-            read -rp "Router IP: " ip
-            read -rp "SSH username (login user) [root]: " user
-            user="${user:-root}"
-            read -rp "VXLAN UCI section (optional): " sec
-            if [ -n "$sec" ]; then
-                run_script "vxlan-diagnose.sh" "$ip" "$user" "$sec"
-            else
-                run_script "vxlan-diagnose.sh" "$ip" "$user"
-            fi
-            ;;
-        6)
             run_script "apply-openwrt-patches.sh" "$ROOT_DIR/openwrt" "$ROOT_DIR/patches/openwrt"
             ;;
-        7)
+        6)
             run_script "backup-router-config.sh"
             ;;
-        8)
+        7)
             run_script "purge-workspace.sh"
             ;;
-        9)
+        8)
             echo "Exiting."
             exit 0
             ;;
