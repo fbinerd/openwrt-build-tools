@@ -185,6 +185,11 @@ pick_make_jobs_interactive() {
 }
 
 # Ensure host cache/work dirs exist
+if [ ! -e "$OPENWRT_SRC" ] && [ -d "$PROJECT_DIR/../openwrt" ]; then
+    echo "Found side-by-side OpenWrt workspace at $PROJECT_DIR/../openwrt. Linking it..."
+    ln -s "../openwrt" "$OPENWRT_SRC"
+fi
+
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$ROUTER_CONFIGS_DIR"
@@ -288,14 +293,19 @@ if [ "$MODE" = "clean" ] && $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx '
     $DOCKER_CMD rm -f openwrt_build >/dev/null
 fi
 
+# Resolve physical path for mounting (to handle symlinks to side-by-side openwrt)
+HOST_OPENWRT_SRC="$(readlink -f "$OPENWRT_SRC" || echo "$OPENWRT_SRC")"
+
 $DOCKER_CMD run --rm -it \
     -v "$PROJECT_DIR":"$CONTAINER_PROJECT_DIR" \
+    -v "$HOST_OPENWRT_SRC":"/home/developer/openwrt" \
     -v "$DOWNLOAD_DIR":"$CONTAINER_DL_CACHE_DIR" \
     -e DL_CACHE_DIR="$CONTAINER_DL_CACHE_DIR" \
     -e OWT_MODE="$MODE" \
     -e OWT_MAKE_JOBS="$MAKE_JOBS" \
     -e OPENWRT_BRANCH="$OPENWRT_BRANCH" \
     -e ENABLE_CUSTOM_FEED="$ENABLE_CUSTOM_FEED" \
+    -e OPENWRT_DIR="/home/developer/openwrt" \
     -w "$CONTAINER_PROJECT_DIR" \
     --name openwrt_build \
     "$BUILDER_IMAGE_NAME" \
