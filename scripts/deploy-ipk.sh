@@ -72,11 +72,11 @@ else
     make "${TARGET_BASE}/clean" "${TARGET_BASE}/compile" V=s -j"$JOBS"
 fi
 
-IPK="$(find "$OPENWRT_DIR/bin/packages" -type f -name "${PACKAGE}_*.ipk" ! -name "*-dbg*" -printf '%T@ %p\n' 2>/dev/null \
+IPK="$(find "$OPENWRT_DIR/bin" -type f -name "${PACKAGE}_*.ipk" ! -name "*-dbg*" -printf '%T@ %p\n' 2>/dev/null \
     | sort -n | tail -n1 | cut -d' ' -f2-)"
 
 if [ -z "${IPK:-}" ] || [ ! -f "$IPK" ]; then
-    echo "Could not find IPK for '$PACKAGE' in $OPENWRT_DIR/bin/packages"
+    echo "Could not find IPK for '$PACKAGE' in $OPENWRT_DIR/bin"
     echo "Tip: provide target manually with PKG_TARGET=..."
     exit 1
 fi

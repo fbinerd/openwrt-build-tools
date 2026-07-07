@@ -8,7 +8,8 @@ OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 DL_DIR="${DL_DIR:-$PROJECT_DIR/dl}"
 REPORTS_DIR="${REPORTS_DIR:-$PROJECT_DIR/reports}"
 CONTAINER_NAME="${CONTAINER_NAME:-openwrt_build}"
-IMAGE_NAME="${IMAGE_NAME:-openwrt-18.06-builder}"
+OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-25.12}"
+IMAGE_NAME="${IMAGE_NAME:-openwrt-${OPENWRT_BRANCH}-builder}"
 ASSUME_YES="${1:-}"
 
 if ! command -v docker >/dev/null 2>&1; then

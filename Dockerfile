@@ -1,15 +1,16 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required dependencies for OpenWrt 18.06 build
+# Install required dependencies for OpenWrt 25.12 build
 RUN apt-get update && apt-get install -y \
-    build-essential libncurses5-dev gawk gettext libssl-dev unzip zlib1g-dev \
-    libpam0g-dev libgnutls28-dev libidn2-dev libssh2-1-dev liblzma-dev libsnmp-dev \
-    file python python3 git wget subversion libtree-perl ca-certificates libelf-dev \
-    bash-completion time rsync ccache sudo \
+    build-essential clang flex bison g++ gawk gcc-multilib g++-multilib \
+    gettext git libncurses-dev libssl-dev python3 python3-distutils \
+    python3-setuptools python3-yaml rsync swig unzip zlib1g-dev file wget \
+    time ccache sudo ca-certificates libelf-dev bash-completion \
     && apt-get clean
+
 
 # Receive host UID/GID to avoid permission mismatch on mounted volumes
 ARG USER_ID=1000

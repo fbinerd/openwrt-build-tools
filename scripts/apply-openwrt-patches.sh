@@ -6,7 +6,8 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 OPENWRT_DIR="${1:-$PROJECT_DIR/openwrt}"
 PATCH_DIR="${2:-$PROJECT_DIR/patches/openwrt}"
-CUSTOM_FEED_LINE="src-git-full customfeed https://github.com/fbinerd/openwrt-custom-feed.git;openwrt-18.06"
+OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-25.12}"
+CUSTOM_FEED_LINE="src-git-full customfeed https://github.com/fbinerd/openwrt-custom-feed.git;${OPENWRT_BRANCH}"
 
 if [ ! -d "$OPENWRT_DIR" ]; then
     echo "ERROR: OpenWrt directory not found: $OPENWRT_DIR"
@@ -66,8 +67,13 @@ fi
 sed -i \
     -e '/^src-git[[:space:]]\+nanofeed[[:space:]]/d' \
     -e '/^src-git[[:space:]]\+customfeed[[:space:]]/d' \
+    -e '/^src-git-full[[:space:]]\+customfeed[[:space:]]/d' \
     "$OPENWRT_DIR/feeds.conf"
-printf '%s\n' "$CUSTOM_FEED_LINE" >> "$OPENWRT_DIR/feeds.conf"
 
-echo "feeds.conf updated with customfeed."
+if [ "${ENABLE_CUSTOM_FEED:-0}" = "1" ] || [ "${ENABLE_CUSTOM_FEED:-}" = "true" ]; then
+    printf '%s\n' "$CUSTOM_FEED_LINE" >> "$OPENWRT_DIR/feeds.conf"
+    echo "feeds.conf updated with customfeed."
+else
+    echo "Custom feed is disabled. Skipping customfeed injection."
+fi
 echo "Patch processing completed successfully."

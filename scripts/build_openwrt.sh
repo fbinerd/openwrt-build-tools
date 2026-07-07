@@ -1,5 +1,5 @@
 #!/bin/bash
-# Internal automation script for OpenWrt 18.06
+# Internal automation script for OpenWrt 25.12
 set -e
 
 # Disable interactive credential prompts for public repositories
@@ -78,28 +78,32 @@ if [ ! -f .config ]; then
 fi
 run_make download
 
-echo "--- Step 4: Enabling customfeed tunnel packages ---"
-# Remove legacy external eoip app integration that conflicts with current customfeed-based flow.
-rm -rf feeds/luci/applications/luci-app-eoip
-rm -f package/feeds/luci/luci-app-eoip
-rm -rf package/openwrt-linux-eoip
+if [ "${ENABLE_CUSTOM_FEED:-0}" = "1" ] || [ "${ENABLE_CUSTOM_FEED:-}" = "true" ]; then
+    echo "--- Step 4: Enabling customfeed tunnel packages ---"
+    # Remove legacy external eoip app integration that conflicts with current customfeed-based flow.
+    rm -rf feeds/luci/applications/luci-app-eoip
+    rm -f package/feeds/luci/luci-app-eoip
+    rm -rf package/openwrt-linux-eoip
 
-# Keep config idempotent if script is rerun.
-sed -i \
-    -e '/^CONFIG_PACKAGE_kmod-eoip=/d' \
-    -e '/^CONFIG_PACKAGE_luci-app-eoip=/d' \
-    -e '/^CONFIG_PACKAGE_eoip=/d' \
-    -e '/^CONFIG_PACKAGE_luci-proto-eoip=/d' \
-    -e '/^CONFIG_PACKAGE_vxlan=/d' \
-    -e '/^CONFIG_PACKAGE_luci-proto-vxlan=/d' \
-    .config
+    # Keep config idempotent if script is rerun.
+    sed -i \
+        -e '/^CONFIG_PACKAGE_kmod-eoip=/d' \
+        -e '/^CONFIG_PACKAGE_luci-app-eoip=/d' \
+        -e '/^CONFIG_PACKAGE_eoip=/d' \
+        -e '/^CONFIG_PACKAGE_luci-proto-eoip=/d' \
+        -e '/^CONFIG_PACKAGE_vxlan=/d' \
+        -e '/^CONFIG_PACKAGE_luci-proto-vxlan=/d' \
+        .config
 
-echo "CONFIG_PACKAGE_eoip=y" >> .config
-echo "CONFIG_PACKAGE_luci-proto-eoip=y" >> .config
-echo "CONFIG_PACKAGE_vxlan=y" >> .config
-echo "CONFIG_PACKAGE_luci-proto-vxlan=y" >> .config
+    echo "CONFIG_PACKAGE_eoip=y" >> .config
+    echo "CONFIG_PACKAGE_luci-proto-eoip=y" >> .config
+    echo "CONFIG_PACKAGE_vxlan=y" >> .config
+    echo "CONFIG_PACKAGE_luci-proto-vxlan=y" >> .config
 
-run_make defconfig
+    run_make defconfig
+else
+    echo "--- Step 4: Custom feed is disabled. Skipping custom tunnel packages configuration ---"
+fi
 
 echo "--- Setup completed successfully! ---"
 exec /bin/bash

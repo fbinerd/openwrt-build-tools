@@ -14,7 +14,9 @@ REAL_GID=${SUDO_GID:-$(id -g)}
 OPENWRT_SRC="$PROJECT_DIR/openwrt"
 DOWNLOAD_DIR="$PROJECT_DIR/dl"
 OPENWRT_REPO_URL="${OPENWRT_REPO_URL:-https://github.com/openwrt/openwrt.git}"
-OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-18.06}"
+OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-25.12}"
+BUILDER_IMAGE_NAME="openwrt-${OPENWRT_BRANCH}-builder"
+ENABLE_CUSTOM_FEED="${ENABLE_CUSTOM_FEED:-0}"
 CONTAINER_PROJECT_DIR="${CONTAINER_PROJECT_DIR:-/home/developer/project}"
 CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
 MODE="${1:-normal}"
@@ -270,7 +272,7 @@ fi
 chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
 
 # 2) Build Docker image
-$DOCKER_CMD build -t openwrt-18.06-builder \
+$DOCKER_CMD build -t "$BUILDER_IMAGE_NAME" \
     --build-arg USER_ID="$REAL_UID" \
     --build-arg GROUP_ID="$REAL_GID" \
     "$PROJECT_DIR"
@@ -292,9 +294,11 @@ $DOCKER_CMD run --rm -it \
     -e DL_CACHE_DIR="$CONTAINER_DL_CACHE_DIR" \
     -e OWT_MODE="$MODE" \
     -e OWT_MAKE_JOBS="$MAKE_JOBS" \
+    -e OPENWRT_BRANCH="$OPENWRT_BRANCH" \
+    -e ENABLE_CUSTOM_FEED="$ENABLE_CUSTOM_FEED" \
     -w "$CONTAINER_PROJECT_DIR" \
     --name openwrt_build \
-    openwrt-18.06-builder \
+    "$BUILDER_IMAGE_NAME" \
     scripts/build_openwrt.sh
 
 RUN_RC=$?

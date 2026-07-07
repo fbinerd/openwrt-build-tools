@@ -13,8 +13,7 @@ SSH_USER="${2:-root}"
 ROUTER_PASS="${3:-${ROUTER_PASS:-r0ut3r}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-IMAGE="$PROJECT_DIR/openwrt/bin/targets/ar71xx/tiny/openwrt-ar71xx-tiny-tl-wr740n-v6-squashfs-sysupgrade.bin"
-REMOTE_IMAGE="/tmp/$(basename "$IMAGE")"
+
 SSH_OPTS=(
     -o HostKeyAlgorithms=+ssh-rsa
     -o PubkeyAcceptedAlgorithms=+ssh-rsa
@@ -26,11 +25,19 @@ if ! [[ "$ROUTER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     exit 1
 fi
 
-if [ ! -f "$IMAGE" ]; then
-    echo "Image not found:"
-    echo "  $IMAGE"
+IMAGE="${IMAGE:-}"
+if [ -z "$IMAGE" ]; then
+    IMAGE="$(find "$PROJECT_DIR/openwrt/bin/targets" -type f \( -name "*sysupgrade.bin" -o -name "*sysupgrade.img" -o -name "*sysupgrade.tar" -o -name "*combined-squashfs.img.gz" -o -name "*sysupgrade.img.gz" \) -printf '%T@ %p\n' 2>/dev/null \
+        | sort -n | tail -n1 | cut -d' ' -f2- || true)"
+fi
+
+if [ -z "$IMAGE" ] || [ ! -f "$IMAGE" ]; then
+    echo "ERROR: Sysupgrade image not found in openwrt/bin/targets/."
+    echo "Please specify the image path explicitly using IMAGE=... $0 ..."
     exit 1
 fi
+
+REMOTE_IMAGE="/tmp/$(basename "$IMAGE")"
 
 echo "Uploading firmware and running sysupgrade in a single SSH session..."
 REMOTE_CMD="cat > '${REMOTE_IMAGE}' && sysupgrade -c '${REMOTE_IMAGE}'"
