@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+. "$SCRIPT_DIR/load-env.sh"
 OPENWRT_CONFIG="${OPENWRT_CONFIG:-$PROJECT_DIR/openwrt/.config}"
 DEST_DIR="${DEST_DIR:-$PROJECT_DIR/router-configs}"
 

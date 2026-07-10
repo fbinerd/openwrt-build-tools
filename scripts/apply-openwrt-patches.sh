@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+. "$SCRIPT_DIR/load-env.sh"
+
 OPENWRT_DIR="${1:-$PROJECT_DIR/openwrt}"
 PATCH_DIR="${2:-$PROJECT_DIR/patches/openwrt}"
 OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-25.12}"

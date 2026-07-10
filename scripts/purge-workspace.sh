@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+. "$SCRIPT_DIR/load-env.sh"
+
 OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 DL_DIR="${DL_DIR:-$PROJECT_DIR/dl}"
 REPORTS_DIR="${REPORTS_DIR:-$PROJECT_DIR/reports}"

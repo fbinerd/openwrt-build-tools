@@ -33,10 +33,13 @@ Or run directly:
 
 - `start.sh`: main CLI (interactive menu + direct commands)
 - `scripts/`: implementation scripts
+- `.env`: local environment overrides loaded automatically by the scripts
+- `.env.example`: template for the root environment file
 - `containers/openwrt-builder/`: OpenWrt build container definition
 - `containers/firmware-extract/`: extraction container notes and layout
 - `containers/serial-lab/`: UART/TTL recovery container layout
 - `containers/tftp-lab/`: TFTP recovery container layout
+- `ai-memory/`: shared working memory for agents and running notes
 - `openwrt/`: local OpenWrt workspace (not tracked in Git)
 - `router-configs/`: saved router profiles (`*.config`)
 - `patches/openwrt/`: OpenWrt patch set applied during bootstrap
@@ -140,6 +143,16 @@ Non-interactive mode:
 - `containers/firmware-extract/`: keeps notes and layout for firmware extraction/rebuild work
 - `containers/serial-lab/`: keeps the UART console/recovery workflow grouped together
 - `containers/tftp-lab/`: keeps TFTP recovery workflow grouped together
+
+## Shared Memory
+
+Use `ai-memory/` as the shared notebook for any agent working in this repo.
+
+- read `ai-memory/README.md` first
+- update `ai-memory/active.md` with current goal, findings, and next step
+- move older notes into `ai-memory/archive/` when they are no longer active
+
+The intent is to keep the working context visible to any future agent without having to reconstruct it from scratch.
 
 ## Feed/Patch Rules
 
