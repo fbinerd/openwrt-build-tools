@@ -12,6 +12,7 @@ NEW_SQUASHFS="$OUT_DIR/rootfs.new.squashfs"
 PADDED_SQUASHFS="$OUT_DIR/rootfs.new.padded.lebs"
 OUT_UBI="$OUT_DIR/OpenWrt.mtd11.0-rootfs-rootlogin.ubi"
 ROOT_PASSWORD_HASH="${ROOT_PASSWORD_HASH:-\$1\$mr80x\$yEAHFEuJzKK9hpFTomw4r/}"
+SSH_KEY_PATH="${SSH_KEY_PATH:-$OUT_DIR/mr80x_oem_maintenance_rsa}"
 
 PEB_SIZE=131072
 DATA_OFFSET=4096
@@ -67,12 +68,17 @@ grep '^root:' "$ROOTFS_DIR/etc/passwd"
 grep '^root:' "$ROOTFS_DIR/etc/shadow"
 
 echo "[2.5/7] Aplicando acesso de manutencao..."
-python3 - "$ROOTFS_DIR" "$ROOT_PASSWORD_HASH" <<'PY'
+if [ ! -f "$SSH_KEY_PATH" ]; then
+  ssh-keygen -q -t rsa -b 2048 -N "" -f "$SSH_KEY_PATH"
+fi
+
+python3 - "$ROOTFS_DIR" "$ROOT_PASSWORD_HASH" "$SSH_KEY_PATH.pub" <<'PY'
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
 root_hash = sys.argv[2]
+ssh_pub = Path(sys.argv[3]).read_text().strip()
 
 def replace_line(path, prefix, newline):
     p = root / path
@@ -91,8 +97,18 @@ replace_line("etc/shadow", "root:", f"root:{root_hash}:0:0:99999:7:::")
 (root / "etc/inittab").write_text(
     "::sysinit:/etc/init.d/rcS S boot\n"
     "::shutdown:/etc/init.d/rcS K shutdown\n"
-    "ttyMSM0::askfirst:/bin/ash --login\n"
+    "ttyMSM0::respawn:/bin/ash --login\n"
 )
+
+(root / "bin/login").unlink(missing_ok=True)
+(root / "bin/login").write_text("#!/bin/sh\nexec /bin/ash --login\n")
+(root / "bin/login").chmod(0o755)
+
+ssh_dir = root / "root/.ssh"
+ssh_dir.mkdir(parents=True, exist_ok=True)
+ssh_dir.chmod(0o700)
+(ssh_dir / "authorized_keys").write_text(ssh_pub + "\n")
+(ssh_dir / "authorized_keys").chmod(0o600)
 
 (root / "etc/config/dropbear").write_text(
     "config dropbear\n"
