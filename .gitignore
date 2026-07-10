@@ -3,7 +3,23 @@
 /reports/
 
 # Local OpenWrt workspace at repository root (always recreated from official clone)
-/openwrt/
+/openwrt
+
+# Generated analysis/recovery artifacts
+/tools/firmware-lab/work/
+/tools/firmware-lab/binaries/
+/tools/firmware-lab/logs/
+/tools/firmware-lab/fw_extracted/
+/tools/firmware-lab/extracted/
+/tools/firmware-lab/ubi_tpdata_extract/
+/tools/firmware-lab/analise_rootfs_logs/
+/tools/firmware-lab/experimento/
+/tools/firmware-lab/tools/tp-link-decrypt/
+/tools/recovery-lab/
+/tools/recovery-lab/logs/
+/tools/recovery-lab/tftp_backups/
+/tools/recovery-lab/tftp_root/
+/tools/recovery-lab/.env
 
 # Logs and temporary files
 *.log

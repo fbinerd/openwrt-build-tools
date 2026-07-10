@@ -1,0 +1,12 @@
+/binaries/
+/logs/
+/work/
+/fw_extracted/
+/extracted/
+/ubi_tpdata_extract/
+/analise_rootfs_logs/
+/experimento/
+/tools/tp-link-decrypt/bin/
+/tools/tp-link-decrypt/obj/
+/tools/tp-link-decrypt/tmp.fwextract/
+/tools/tp-link-decrypt/rsa_key_extractor.log
