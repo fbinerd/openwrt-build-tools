@@ -32,3 +32,10 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   ports 1-4 to PHY 1-4 and WAN to PHY 0; `/etc/config/switch` tags CPU port
   `6t` and the live bridge FDB showed host cables on `eth1.2` and `eth1.4`,
   while WAN DHCP was on `eth1.4094`.
+- 2026-07-10: live OEM shell confirmed `/proc/driver/rtl8367s/phy` sees physical
+  ports 0-4, `/proc/driver/rtl8367s/sgmii` is enabled by the switch init, and
+  OEM runs `echo ptype set 16 1 > /proc/driver/rtl8367s/port`,
+  `echo linkup 1 > /proc/driver/rtl8367s/phy`, and
+  `devmem 0x39D00018 32 0xFFFF0004`. The next OpenWrt test relaxes the custom
+  VLAN tagged-only CPU-port setting and forces DSA `rtl8_4t` on the Realtek CPU
+  port to test whether the failure is CPU tag placement/drop.

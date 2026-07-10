@@ -790,3 +790,28 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
   - portanto ha duas linhas/etapas de reset no firmware original, e ainda falta
     reproduzir integralmente no boot normal do OpenWrt a sequencia que o U-Boot
     deixa pronta quando faz TFTP.
+
+## 2026-07-10 - Coleta OEM ao vivo e novo teste de CPU tag
+
+- Com o firmware original acessivel por UART, foi confirmado novamente:
+  - `eth1` e o master/conduit do switch Realtek;
+  - `br-lan` usa `eth1.2 eth1.3 eth1.4 eth1.5`;
+  - WAN usa `eth1.4094` e recebeu DHCP;
+  - `eth0` fica down e nao participa do switch.
+- O driver OEM expõe `/proc/driver/rtl8367s/{init,lut,mib,phy,port,reg,sgmii,vlan}`.
+- A leitura de `/proc/driver/rtl8367s/phy` mostra somente as portas fisicas
+  0-4. A porta CPU e tratada como extensao/logica (`CPU_PORTS=16` nos scripts).
+- A inicializacao OEM relevante em `/lib/switch/core_phy.sh` faz:
+  - `echo 1 > /proc/driver/rtl8367s/sgmii`;
+  - `echo ptype set $CPU_PORTS 1 > /proc/driver/rtl8367s/port`;
+  - `echo linkup 1 > /proc/driver/rtl8367s/phy`;
+  - `ssdk_sh port flowCtrl set 2 enable`;
+  - `devmem 0x39D00018 32 0xFFFF0004`.
+- O teste anterior do OpenWrt mostrava RX nas portas DSA, mas RX zero no master
+  e TX do master sem chegar na porta fisica. Isso aponta para drop/posicao de
+  CPU tag, nao para DHCP puro.
+- Novo ajuste preparado:
+  - DTS: `port@6` recebeu `dsa-tag-protocol = "rtl8_4t"`;
+  - patch Realtek: removida a escrita customizada que forçava o CPU port para
+    aceitar apenas quadros VLAN tagged em `0x07aa`, pois DSA tag nao e tag
+    802.1Q e isso pode bloquear trafego CPU->switch.
