@@ -39,3 +39,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `devmem 0x39D00018 32 0xFFFF0004`. The next OpenWrt test relaxes the custom
   VLAN tagged-only CPU-port setting and forces DSA `rtl8_4t` on the Realtek CPU
   port to test whether the failure is CPU tag placement/drop.
+- 2026-07-10: OpenWrt branch `codex-mr80x-v5-ethernet-debug` built cleanly after
+  commits `660a849563`, `9139f91788`, and `b07f701b3b`. Fresh images are in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/` with hashes:
+  initramfs `0cce92465abaa898ec1025e0013ac8cc1487776d5acfdf91f1ab1621ca9fb2cb`,
+  factory UBI `b6b02b8654a4bed92a4bfc7a7f543326c04734bdc958003312b053d8ed1320c6`,
+  sysupgrade `2b4439c833ee258828fec1e88a27bbc3a4fdde31d8085456b44f89c92d190efd`.
+  TFTP container `recovery-lab-tftp-server-1` serves that directory on UDP 69,
+  but host USB Ethernet interfaces currently have `192.168.1.x`, not the desired
+  `192.168.6.83/24` from `.env`.

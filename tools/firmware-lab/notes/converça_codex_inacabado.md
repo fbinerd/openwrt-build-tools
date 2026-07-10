@@ -815,3 +815,35 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
   - patch Realtek: removida a escrita customizada que forçava o CPU port para
     aceitar apenas quadros VLAN tagged em `0x07aa`, pois DSA tag nao e tag
     802.1Q e isso pode bloquear trafego CPU->switch.
+
+## 2026-07-10 - Build do teste `rtl8_4t`
+
+- Commits relevantes no repo OpenWrt:
+  - `660a849563 net: realtek: test RTL8367S tail CPU tags`;
+  - `9139f91788 net: realtek: repair RTL8367S patch header`;
+  - `b07f701b3b net: realtek: fix RTL8367S setup hunk`.
+- A imagem compilou limpa via Docker.
+- Artefatos novos em `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  - `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb`
+    - tamanho: `5505468`
+    - sha256: `0cce92465abaa898ec1025e0013ac8cc1487776d5acfdf91f1ab1621ca9fb2cb`
+  - `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-squashfs-factory.ubi`
+    - tamanho: `16646144`
+    - sha256: `b6b02b8654a4bed92a4bfc7a7f543326c04734bdc958003312b053d8ed1320c6`
+  - `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-squashfs-sysupgrade.bin`
+    - tamanho: `15800600`
+    - sha256: `2b4439c833ee258828fec1e88a27bbc3a4fdde31d8085456b44f89c92d190efd`
+- O pacote `net/dsa/tag_rtl8_4.o` foi compilado, confirmando que o protocolo
+  de tag Realtek novo entrou na build.
+- O container `recovery-lab-tftp-server-1` esta ativo e serve exatamente esse
+  diretorio em `/var/tftpboot` via UDP/69.
+- Atenção antes de TFTP pelo U-Boot:
+  - `.env` espera `TFTP_HOST_ADDRESS=192.168.6.83/24`;
+  - no momento da checagem, `enx000e0986bc59` e `enx00e04c7611f9` estavam com
+    endereços `192.168.1.x`;
+  - portanto o U-Boot deve usar `serverip` na faixa realmente configurada ou a
+    interface do host deve ser recolocada em `192.168.6.83/24`.
+- O roteador apareceu no prompt `IPQ5018#` apos um reboot visto no log serial.
+  O broker serial recebia saida, mas comandos enviados por socket nao chegaram
+  ao U-Boot; ha multiplos clientes conectados ao broker e isso precisa ser
+  limpo antes de automacao de flash/boot pelo Codex.
