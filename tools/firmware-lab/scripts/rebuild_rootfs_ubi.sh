@@ -11,6 +11,7 @@ OUT_DIR="${OUT_DIR:-$WORK_DIR/rebuilt}"
 NEW_SQUASHFS="$OUT_DIR/rootfs.new.squashfs"
 PADDED_SQUASHFS="$OUT_DIR/rootfs.new.padded.lebs"
 OUT_UBI="$OUT_DIR/OpenWrt.mtd11.0-rootfs-rootlogin.ubi"
+ROOT_PASSWORD_HASH="${ROOT_PASSWORD_HASH:-\$1\$mr80x\$yEAHFEuJzKK9hpFTomw4r/}"
 
 PEB_SIZE=131072
 DATA_OFFSET=4096
@@ -64,6 +65,45 @@ echo "[2/7] Backup de metadados..."
 sha256sum "$ORIGINAL_UBI" | tee "$OUT_DIR/original.sha256"
 grep '^root:' "$ROOTFS_DIR/etc/passwd"
 grep '^root:' "$ROOTFS_DIR/etc/shadow"
+
+echo "[2.5/7] Aplicando acesso de manutencao..."
+python3 - "$ROOTFS_DIR" "$ROOT_PASSWORD_HASH" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+root_hash = sys.argv[2]
+
+def replace_line(path, prefix, newline):
+    p = root / path
+    lines = p.read_text().splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[i] = newline
+            break
+    else:
+        lines.insert(0, newline)
+    p.write_text("\n".join(lines) + "\n")
+
+replace_line("etc/passwd", "root:", "root:x:0:0:root:/root:/bin/ash")
+replace_line("etc/shadow", "root:", f"root:{root_hash}:0:0:99999:7:::")
+
+(root / "etc/inittab").write_text(
+    "::sysinit:/etc/init.d/rcS S boot\n"
+    "::shutdown:/etc/init.d/rcS K shutdown\n"
+    "ttyMSM0::askfirst:/bin/ash --login\n"
+)
+
+(root / "etc/config/dropbear").write_text(
+    "config dropbear\n"
+    "\toption enable '1'\n"
+    "\toption PasswordAuth 'on'\n"
+    "\toption RootPasswordAuth 'on'\n"
+    "\toption RootLogin '1'\n"
+    "\toption SysAccountLogin '1'\n"
+    "\toption Port '22'\n"
+)
+PY
 
 echo "[3/7] Criando novo SquashFS..."
 rm -f "$NEW_SQUASHFS" "$PADDED_SQUASHFS"
