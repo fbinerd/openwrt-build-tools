@@ -20,3 +20,8 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 ## Recent Notes
 
 - Created shared `ai-memory/` area for agents to record live context.
+- 2026-07-10: OEM MR80X v5 rootfs rebuild must preserve the real `ubi_rootfs`
+  layout: volume 1 has 157 LEBs, not 160. Also build SquashFS with plain XZ
+  for the OEM 4.4 kernel; `-Xbcj arm` made the rebuilt rootfs fail to mount
+  with `Cannot open root device "mtd:ubi_rootfs"` / `error -5`. The corrected
+  image booted to `MR80X login:` after flashing via U-Boot `flash rootfs`.

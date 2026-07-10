@@ -16,14 +16,42 @@ PEB_SIZE=131072
 DATA_OFFSET=4096
 LEB_SIZE=126976
 START_PEB=32
-COUNT=160
+# O volume ubi_rootfs do dump Mercusus.mtd11.0-rootfs.bin tem 157 LEBs
+# mapeados por VID headers. Usar mais que isso escreve em PEBs livres e deixa
+# o SquashFS truncado para o kernel, causando panic no boot.
+COUNT=157
 MAX_ROOTFS_SIZE=$((LEB_SIZE * COUNT))
 EXCLUDES=(
   BR
   CA
+  EU_UN_1
   RU
   US
   US_UN_1
+  www/webpages/locale/bg_BG
+  www/webpages/locale/cs_CZ
+  www/webpages/locale/da_DK
+  www/webpages/locale/es_ES
+  www/webpages/locale/es_MX
+  www/webpages/locale/fi_FI
+  www/webpages/locale/fr_FR
+  www/webpages/locale/hu_HU
+  www/webpages/locale/it_IT
+  www/webpages/locale/jp_JP
+  www/webpages/locale/ko_KR
+  www/webpages/locale/nl_NL
+  www/webpages/locale/no_NO
+  www/webpages/locale/pl_PL
+  www/webpages/locale/pt_PT
+  www/webpages/locale/ro_RO
+  www/webpages/locale/ru_RU
+  www/webpages/locale/sk_SK
+  www/webpages/locale/sv_SE
+  www/webpages/locale/th_TH
+  www/webpages/locale/tr_TR
+  www/webpages/locale/uk_UA
+  www/webpages/locale/vi_VN
+  www/webpages/locale/zh_TW
 )
 
 mkdir -p "$OUT_DIR"
@@ -43,8 +71,6 @@ rm -f "$NEW_SQUASHFS" "$PADDED_SQUASHFS"
 mksquashfs "$ROOTFS_DIR" "$NEW_SQUASHFS" \
   -noappend \
   -comp xz \
-  -Xbcj arm \
-  -Xdict-size 100% \
   -b 262144 \
   -all-root \
   -no-xattrs \
@@ -95,7 +121,7 @@ PEB_SIZE = 131072
 DATA_OFFSET = 4096
 LEB_SIZE = 126976
 START_PEB = 32
-COUNT = 160
+COUNT = 157
 
 expected = LEB_SIZE * COUNT
 if len(payload) != expected:
@@ -128,7 +154,7 @@ PEB_SIZE = 131072
 DATA_OFFSET = 4096
 LEB_SIZE = 126976
 START_PEB = 32
-COUNT = 160
+COUNT = 157
 
 with inp.open("rb") as f, out.open("wb") as g:
     for peb in range(START_PEB, START_PEB + COUNT):
