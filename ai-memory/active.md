@@ -25,3 +25,10 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   for the OEM 4.4 kernel; `-Xbcj arm` made the rebuilt rootfs fail to mount
   with `Cannot open root device "mtd:ubi_rootfs"` / `error -5`. The corrected
   image booted to `MR80X login:` after flashing via U-Boot `flash rootfs`.
+- 2026-07-10: OEM MR80X v5 Ethernet topology was verified from live OEM
+  firmware over UART. OEM uses `eth1` as the CPU/conduit link to RTL8367S:
+  LAN bridge is `eth1.2 eth1.3 eth1.4 eth1.5`, WAN is `eth1.4094`, and
+  `eth0` is unused/down. `/lib/network/network_arch.sh` maps LAN logical
+  ports 1-4 to PHY 1-4 and WAN to PHY 0; `/etc/config/switch` tags CPU port
+  `6t` and the live bridge FDB showed host cables on `eth1.2` and `eth1.4`,
+  while WAN DHCP was on `eth1.4094`.
