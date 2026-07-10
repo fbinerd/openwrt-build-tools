@@ -33,6 +33,10 @@ Or run directly:
 
 - `start.sh`: main CLI (interactive menu + direct commands)
 - `scripts/`: implementation scripts
+- `containers/openwrt-builder/`: OpenWrt build container definition
+- `containers/firmware-extract/`: extraction container notes and layout
+- `containers/serial-lab/`: UART/TTL recovery container layout
+- `containers/tftp-lab/`: TFTP recovery container layout
 - `openwrt/`: local OpenWrt workspace (not tracked in Git)
 - `router-configs/`: saved router profiles (`*.config`)
 - `patches/openwrt/`: OpenWrt patch set applied during bootstrap
@@ -129,6 +133,13 @@ Non-interactive mode:
 - `scripts/deploy-sysupgrade.sh`: upload firmware + `sysupgrade -c`
 - `scripts/backup-router-config.sh`: export current `.config` as named profile
 - `scripts/purge-workspace.sh`: purge local Docker runtime/cache/build workspace
+
+## Container Map
+
+- `containers/openwrt-builder/`: builds and runs the OpenWrt toolchain image used by `./start.sh docker`
+- `containers/firmware-extract/`: keeps notes and layout for firmware extraction/rebuild work
+- `containers/serial-lab/`: keeps the UART console/recovery workflow grouped together
+- `containers/tftp-lab/`: keeps TFTP recovery workflow grouped together
 
 ## Feed/Patch Rules
 

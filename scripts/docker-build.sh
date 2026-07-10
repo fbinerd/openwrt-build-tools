@@ -277,7 +277,7 @@ fi
 chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
 
 # 2) Build Docker image
-$DOCKER_CMD build -t "$BUILDER_IMAGE_NAME" \
+$DOCKER_CMD build -f "$PROJECT_DIR/containers/openwrt-builder/Dockerfile" -t "$BUILDER_IMAGE_NAME" \
     --build-arg USER_ID="$REAL_UID" \
     --build-arg GROUP_ID="$REAL_GID" \
     "$PROJECT_DIR"
