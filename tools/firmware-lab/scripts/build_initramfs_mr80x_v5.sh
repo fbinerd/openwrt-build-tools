@@ -63,17 +63,32 @@ PY
 echo "[4/7] Confirmando alvos na configuração..."
 grep -nE '^(CONFIG_TARGET_qualcommax|CONFIG_TARGET_qualcommax_ipq50xx|CONFIG_TARGET_qualcommax_ipq50xx_DEVICE_mercusys_mr80x-v5|CONFIG_TARGET_ROOTFS_INITRAMFS|CONFIG_EXTERNAL_CPIO|CONFIG_TARGET_SUBTARGET|CONFIG_TARGET_PROFILE)=' .config || true
 
-echo "[5/7] Compilando..."
+echo "[5/7] Limpando estado antigo do kernel para forçar regeneração do initramfs..."
+make DL_DIR="$DL_DIR" -j"$(nproc)" V=s target/linux/clean
+
+echo "[6/7] Compilando..."
 make DL_DIR="$DL_DIR" -j"$(nproc)" V=s target/linux/compile
 
-echo "[6/7] Procurando imagens geradas..."
+echo "[7/7] Validando que o initramfs embutiu o rootfs OEM..."
+KERNEL_INITRAMFS_CPIO=$(find build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq50xx/linux-6.12.94/usr -name initramfs_data.cpio -print -quit)
+if [ -z "$KERNEL_INITRAMFS_CPIO" ] || [ ! -f "$KERNEL_INITRAMFS_CPIO" ]; then
+	echo "ERRO: não encontrei o initramfs_data.cpio do kernel."
+	exit 1
+fi
+if ! cpio -it < "$KERNEL_INITRAMFS_CPIO" | grep -qx 'bin/login.sh'; then
+	echo "ERRO: o initramfs do kernel não contém os arquivos do rootfs OEM."
+	echo "Arquivo verificado: $KERNEL_INITRAMFS_CPIO"
+	exit 1
+fi
+
+echo "[8/7] Procurando imagens geradas..."
 find bin/targets -type f \
     \( -iname '*initramfs*.itb' -o \
        -iname '*initramfs*.bin' -o \
        -iname '*mr80x*initramfs*' \) \
     -printf '%p\n'
 
-echo "[6.5/7] Verificando cpio configurado..."
+echo "[8.5/7] Verificando cpio configurado..."
 grep -nE '^(CONFIG_TARGET_ROOTFS_INITRAMFS|CONFIG_EXTERNAL_CPIO)=' .config || true
 
-echo "[7/7] Concluído."
+echo "[9/7] Concluído."
