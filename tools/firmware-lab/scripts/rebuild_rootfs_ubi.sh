@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORK_DIR="$BASE_DIR/experimento/extract_safe"
+BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+WORK_DIR="$BASE_DIR/work/experimento"
 
-ORIGINAL_UBI="$WORK_DIR/original.ubi"
-ROOTFS_DIR="$WORK_DIR/squashfs-rootfs"
-OUT_DIR="$BASE_DIR/experimento/rebuilt"
+ORIGINAL_UBI="${ORIGINAL_UBI:-$WORK_DIR/Mercusus.mtd11.0-rootfs.bin}"
+ROOTFS_DIR="${ROOTFS_DIR:-$(find "$BASE_DIR/work/extracted" -type d -name squashfs-root | head -n 1)}"
+OUT_DIR="${OUT_DIR:-$WORK_DIR/rebuilt}"
 
 NEW_SQUASHFS="$OUT_DIR/rootfs.new.squashfs"
 PADDED_SQUASHFS="$OUT_DIR/rootfs.new.padded.lebs"
@@ -16,8 +16,15 @@ PEB_SIZE=131072
 DATA_OFFSET=4096
 LEB_SIZE=126976
 START_PEB=32
-COUNT=157
+COUNT=160
 MAX_ROOTFS_SIZE=$((LEB_SIZE * COUNT))
+EXCLUDES=(
+  BR
+  CA
+  RU
+  US
+  US_UN_1
+)
 
 mkdir -p "$OUT_DIR"
 
@@ -33,13 +40,15 @@ grep '^root:' "$ROOTFS_DIR/etc/shadow"
 echo "[3/7] Criando novo SquashFS..."
 rm -f "$NEW_SQUASHFS" "$PADDED_SQUASHFS"
 
-fakeroot mksquashfs "$ROOTFS_DIR" "$NEW_SQUASHFS" \
+mksquashfs "$ROOTFS_DIR" "$NEW_SQUASHFS" \
   -noappend \
   -comp xz \
+  -Xbcj arm \
   -Xdict-size 100% \
   -b 262144 \
+  -all-root \
   -no-xattrs \
-  -no-exports
+  -e "${EXCLUDES[@]}"
 
 NEW_SIZE="$(stat -c '%s' "$NEW_SQUASHFS")"
 
@@ -86,7 +95,7 @@ PEB_SIZE = 131072
 DATA_OFFSET = 4096
 LEB_SIZE = 126976
 START_PEB = 32
-COUNT = 157
+COUNT = 160
 
 expected = LEB_SIZE * COUNT
 if len(payload) != expected:
@@ -105,7 +114,6 @@ PY
 
 echo "[6/7] Verificando imagem reconstruída..."
 file "$OUT_UBI" | tee "$OUT_DIR/rebuilt_file.txt"
-binwalk "$OUT_UBI" | tee "$OUT_DIR/rebuilt_binwalk.txt"
 sha256sum "$OUT_UBI" | tee "$OUT_DIR/rebuilt.sha256"
 
 echo "[7/7] Extraindo SquashFS da imagem reconstruída para teste rápido..."
@@ -120,7 +128,7 @@ PEB_SIZE = 131072
 DATA_OFFSET = 4096
 LEB_SIZE = 126976
 START_PEB = 32
-COUNT = 157
+COUNT = 160
 
 with inp.open("rb") as f, out.open("wb") as g:
     for peb in range(START_PEB, START_PEB + COUNT):
