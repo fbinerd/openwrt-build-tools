@@ -847,3 +847,49 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
   O broker serial recebia saida, mas comandos enviados por socket nao chegaram
   ao U-Boot; ha multiplos clientes conectados ao broker e isso precisa ser
   limpo antes de automacao de flash/boot pelo Codex.
+
+## 2026-07-10 - Initramfs real, TFTP corrigido e estado Ethernet
+
+- A imagem `initramfs-uImage.itb` anterior tinha apenas cerca de 5.3 MiB e nao
+  era uma initramfs real. O kernel subia com `root=/dev/ubiblock0_1` e parava
+  em `VFS: Unable to mount root fs`.
+- A causa era `CONFIG_EXTERNAL_CPIO` apontando para um caminho absoluto do host
+  dentro da `.config`; no Docker esse caminho nao era valido para embutir a
+  rootfs esperada.
+- Foi regenerada `.config` para `qualcommax/ipq50xx/mercusys_mr80x-v5` com
+  `CONFIG_EXTERNAL_CPIO=""` e `CONFIG_TARGET_ROOTFS_INITRAMFS=y`.
+- A imagem valida ficou em:
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb`
+  - tamanho: `15477920` bytes;
+  - sha256: `cf2b822e9b7b6d45ffa9f25be00f9cc2dceff439fc4130b0f33aab5b64daf0d9`;
+  - FIT mostra kernel gzip de `15451377` bytes, confirmando rootfs embutida.
+- TFTP:
+  - `enx00e04c7611f9` com `192.168.6.83/24` falhou na imagem maior, acumulando
+    timeouts e erros TX.
+  - O servidor `dnsmasq` estava com `--tftp-no-blocksize`; removido para permitir
+    negociacao de bloco.
+  - Movendo `192.168.6.83/24` para `enx000e0986bc59` e usando
+    `setenv tftpblocksize 1468`, o U-Boot transferiu a imagem a `3.3 MiB/s`.
+  - Comandos usados:
+    ```sh
+    setenv ipaddr 192.168.6.1
+    setenv serverip 192.168.6.83
+    setenv tftpblocksize 1468
+    tftpboot 0x44000000 openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb
+    bootm 0x44000000
+    ```
+- Boot:
+  - A initramfs bootou ate OpenWrt sem panic.
+  - Wi-Fi STA conectou em `Tassotti` e recebeu `192.168.1.57`.
+  - `br-lan` subiu como `192.168.8.1/24`.
+  - Portas presentes: `lan1`, `lan2`, `lan3`, `wan`.
+- Estado Ethernet ainda ruim:
+  - DHCP do host em `enx000e0986bc59` nao recebeu lease.
+  - Com IP estatico `192.168.8.2/24`, ping do host para `192.168.8.1` falhou.
+  - `lan3` ficou link-up mas com RX zero no teste.
+  - `lan1` acumulou RX/multicast mas TX zero; `eth0` tambem ficou RX zero.
+  - Isso ainda aponta para problema de caminho CPU-port/tag/DSA, nao apenas
+    dnsmasq ou firewall.
+- Cuidado: rodar dois `tcpdump` em paralelo nessa initramfs grande causou OOM e
+  matou `netifd`/`wpa_supplicant`. Para proximos testes usar `ip -s`, `bridge
+  fdb`, ou apenas um `tcpdump -s 96 -c N` por vez.

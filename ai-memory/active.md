@@ -48,3 +48,17 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   TFTP container `recovery-lab-tftp-server-1` serves that directory on UDP 69,
   but host USB Ethernet interfaces currently have `192.168.1.x`, not the desired
   `192.168.6.83/24` from `.env`.
+- 2026-07-10: The previous 5.3 MiB `initramfs-uImage.itb` was not a real
+  initramfs; it booted a kernel that tried to mount `/dev/ubiblock0_1` and
+  panicked. Rebuilt with `CONFIG_EXTERNAL_CPIO=""`; the valid initramfs ITB is
+  15 MiB, embeds `root-qualcommax`, and booted to OpenWrt over TFTP.
+- 2026-07-10: TFTP transfer of the 15 MiB ITB only completed after removing
+  `--tftp-no-blocksize` from recovery-lab dnsmasq and moving `192.168.6.83/24`
+  to `enx000e0986bc59`. U-Boot command used:
+  `setenv tftpblocksize 1468; tftpboot 0x44000000 openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb; bootm 0x44000000`.
+- 2026-07-10: Current initramfs boot reaches OpenWrt, Wi-Fi STA gets
+  `192.168.1.57`, `br-lan` is `192.168.8.1/24`, and DSA ports are
+  `lan1 lan2 lan3 wan`. Ethernet still does not pass host traffic: DHCP on the
+  host times out, static `192.168.8.2` cannot ping `192.168.8.1`, and counters
+  show LAN link/RX inconsistencies. Avoid running multiple tcpdump instances in
+  initramfs; RAM pressure caused OOM kills of `netifd`/`wpa_supplicant`.
