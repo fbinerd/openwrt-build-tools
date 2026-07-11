@@ -33,6 +33,13 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   swconfig-to-ASIC physical port map `{0,1,2,3,4,7,6}`, and fallback to direct
   `rtl8367c_setAsicVlan4kEntry()` when `rtk_vlan_set()` fails. The package
   `package/kernel/rtl8367s-vendor/compile` passed in Docker after this change.
+  Full Docker build also passed. Test artifacts:
+  initramfs ITB
+  `ce1433034861a4f987d44d4ce861768c7f423b7bf50c38f7c0bd171d54d32747`,
+  factory UBI
+  `1a8503433f340e6e7aecd9d7dcbe113f8ebc8f20071dc5b131e56f4624560808`,
+  sysupgrade
+  `4a4fb2a717e9d0378ca29885961e6270e593b6b9de2a2bbfc151ac7a1711dc1b`.
 - 2026-07-11: Initramfs `2b826be3...` carregou por TFTP e confirmou que
   `ptype ext0 tag-only` aplica com sucesso, mas `rtk_vlan_portPvid_set()`
   ainda volta `RT_ERR_OK` enquanto `rtk_vlan_portPvid_get()` le imediatamente
