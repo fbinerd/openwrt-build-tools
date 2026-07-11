@@ -245,3 +245,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `334a1213b32230c64fc10ef562f59d40e67bda0e9149362fc3903d4247889b19`.
   Next boot must check whether GMAC2 receives frames after this patch before
   changing VLAN topology again.
+- 2026-07-11: Initramfs built from OpenWrt commit `c324cbdba1` with sha256
+  `e03bf70196098d7788b052a5bdf189b00f40a76aa83deabd4244202a5d466944`
+  did not fix Ethernet. The switch still saw physical link/counters, but Linux
+  `eth0`, `eth0.1`, `eth0.2`, and `br-lan` RX stayed at zero and ping to
+  `192.168.8.30` failed. The added EXT1 HSGMII calls logged `ret=3`, which is
+  `RT_ERR_PORT_ID`; do not repeat the EXT1-HSGMII path with this driver. The
+  next test restores EXT1 RGMII and instead aligns the OpenWrt topology with
+  the OEM FDT/runtime by enabling `dp1` in SGMII so the Realtek conduit can be
+  `eth1`, then configuring swconfig as `6@eth1`.
