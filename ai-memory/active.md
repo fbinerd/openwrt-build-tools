@@ -19,6 +19,16 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Valid RTL8367S vendor-driver boot with initramfs sha256
+  `c29c9a7082c697c484ae53eb6f1fb9fdbf22b9bc63f5de37eafa39b13a490f0b`
+  proved the new module was loaded. The driver can read the switch over MDIO:
+  register `0x1300 = 0x6642`, `0x1301 = 0x0010`. The immediate failure is
+  `rtk_switch_init ret=-1`; every later Realtek API call returns `15`
+  (`RT_ERR_NOT_INIT`). Cause found in vendor `rtk_switch_probe()`: it accepts
+  RTL8367C IDs `0x0276`, `0x0597`, `0x6367` but rejected MR80X v5 chip ID
+  `0x6642`. Current test adds `0x6642` as RTL8367C-compatible. If this boots
+  with `rtk_switch_init ret=0`, continue with CPU/ext port and VLAN traffic
+  tests instead of re-testing MDIO access.
 - 2026-07-11: Current OpenWrt Ethernet direction is to test the existing vendor
   RTL8367S MDIO/swconfig driver instead of DSA. Commit `ca5b7b6960` adds
   `kmod-rtl8367s-vendor` and a `switch0` board config using `6@eth0`,
