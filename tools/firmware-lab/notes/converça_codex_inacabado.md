@@ -926,3 +926,51 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
   - `ip -s link show eth0` e interfaces VLAN geradas;
   - comparar PVID/VLAN com OEM: CPU port 6 tagged, WAN PHY0, LAN PHY1-3 para o
     MR80X v5 fisico de 3 LANs + WAN.
+
+## 2026-07-11 - Resultado do teste vendor/swconfig por hot-reload
+
+- Imagem initramfs validada e bootada por TFTP:
+  - sha256 `60f28c077d7f9842dc7dfa98c56336d0a16e497476b4b06433a331e7f6e14880`;
+  - tinha `swconfig`, `kmod-swconfig`, `kmod-rtl8367s-vendor`;
+  - root continha `/sbin/swconfig` e `board.d/02_network` com `switch0`.
+- Resultado limpo dessa imagem:
+  - OpenWrt subiu por TFTP, Wi-Fi STA recebeu `192.168.1.64`;
+  - `/etc/config/network` gerou `eth0.1` para WAN e `eth0.2` para LAN;
+  - porem `swconfig list` nao achou switch;
+  - causa encontrada: no build externo o `#ifdef CONFIG_SWCONFIG` do driver
+    vendor nao estava ativo, entao `rtl8367s_swconfig_init()` nao era chamado.
+- Correção aplicada no OpenWrt:
+  - commit `b7679c5f9c rtl8367s-vendor: enable swconfig MDIO access`;
+  - `EXTRA_CFLAGS` agora define `-DCONFIG_SWCONFIG=1`;
+  - tambem define `-DMDC_MDIO_OPERATION=1`, porque sem isso a biblioteca
+    Realtek cai no caminho I2C/GPIO com macros vazias e nao fala MDIO real.
+- Teste de hot-reload do `.ko` com apenas `CONFIG_SWCONFIG=1`:
+  - `swconfig list` passou a mostrar `Found: switch0 - RTL8367C`;
+  - ping host `192.168.8.2` -> roteador `192.168.8.1` ainda falhou;
+  - `swconfig dev switch0 show` retornava `???` para link/PVID/VLAN;
+  - conclusao: registrar `switch0` nao basta; as chamadas Realtek API ainda
+    nao estavam acessando o chip.
+- Teste de hot-reload do `.ko` com `CONFIG_SWCONFIG=1` +
+  `MDC_MDIO_OPERATION=1`:
+  - o modulo carregado ficou maior (`rtl8367s_gsw` ~356 KiB no roteador);
+  - o log mostrou leituras estranhas/zeradas (`reg0x0 = 0x0`) e VLANs
+    aparentando somente ports 16/17;
+  - `swconfig list` ficou preso e o hot-reload gerou trace em
+    `register_switch()`/`rtl8367s_swconfig_init()`;
+  - nao repetir esse hot-reload como teste conclusivo: a sessão estava suja por
+    `network stop`, remoção/reinserção do modulo e registros `/proc`/swconfig
+    anteriores.
+- Nova imagem limpa gerada para teste por TFTP:
+  - initramfs sha256 `7ca443d77daa30ac333e37a8dea2ea20cf49dc1ebc512cd3a0297ee97583c0f8`;
+  - sysupgrade sha256 `17ae25bd8b3426cd1c1d807a2ebbeef06130e22c4ef534455725b4356606523c`;
+  - contem `/sbin/swconfig` e `rtl8367s_gsw.ko` recompilado com ambas as flags.
+- Proximo teste precisa ser boot limpo dessa imagem, nao hot-reload:
+  - TFTP ja serve `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx`;
+  - comandos U-Boot padrao continuam:
+    `setenv ipaddr 192.168.6.1; setenv serverip 192.168.6.83; setenv tftpblocksize 1468; tftpboot 0x44000000 openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb; bootm 0x44000000`.
+- Se o boot limpo ainda travar/zerar leituras MDIO:
+  - revisar `MDC_MDIO_PHY_ID` em `rtl8367c/smi.c` (hoje hardcoded em 29/0x1d);
+  - OEM FDT confirma switch externo em `mdio@90000`, `mdio-bus = <0x09>`,
+    `switch_cpu_bmp = <0x40>`, `switch_lan_bmp = <0x1e>`, `reset_gpio = <0x27>`;
+  - OEM `mdio@90000` tambem declara `phy-reset-gpio = GPIO26`, enquanto o
+    switch externo usa reset GPIO39. O nosso node vendor usa GPIO39.

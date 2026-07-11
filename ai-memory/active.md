@@ -25,6 +25,14 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `0:wan`, `1:lan:3`, `2:lan:2`, `3:lan:1`. The first vendor-driver boot was
   inconclusive because the built root still had stale DSA board config and
   lacked `/sbin/swconfig`; do not treat that image as a failed driver test.
+- 2026-07-11: Commit `b7679c5f9c` makes the vendor driver compile with
+  `-DCONFIG_SWCONFIG=1 -DMDC_MDIO_OPERATION=1`. Runtime hot-reload proved
+  `CONFIG_SWCONFIG` is needed to register `switch0`, and `MDC_MDIO_OPERATION`
+  is needed to avoid the empty GPIO/I2C access path. Do not repeat the
+  hot-reload test as conclusive: it left the router in a dirty state with
+  `swconfig list` stuck and a `register_switch()` trace. Next test is a clean
+  TFTP boot of initramfs sha256
+  `7ca443d77daa30ac333e37a8dea2ea20cf49dc1ebc512cd3a0297ee97583c0f8`.
 - Created shared `ai-memory/` area for agents to record live context.
 - 2026-07-10: OEM MR80X v5 rootfs rebuild must preserve the real `ubi_rootfs`
   layout: volume 1 has 157 LEBs, not 160. Also build SquashFS with plain XZ
