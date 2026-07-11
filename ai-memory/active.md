@@ -19,6 +19,14 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Initramfs `2b826be3...` carregou por TFTP e confirmou que
+  `ptype ext0 tag-only` aplica com sucesso, mas `rtk_vlan_portPvid_set()`
+  ainda volta `RT_ERR_OK` enquanto `rtk_vlan_portPvid_get()` le imediatamente
+  `pvid=0`. Isso elimina a hipotese de ser apenas exibicao ruim do swconfig.
+  O novo material em `source_codes_to_analize/rtl83xx` mostra que o caminho
+  RTL8367D grava PVID diretamente em `0x0700 + porta_fisica` com mascara
+  `0x0fff`, diferente do caminho RTL8367C/CVIDX usado no nosso driver. Patch
+  experimental em `rtl8367s.c` agora testa PVID direto estilo RTL8367D.
 - 2026-07-11: Booted MR80X v5 initramfs
   `653d12f7c9cc77723074274f16da9e83c71f92f31370ffb99166c23576d8e5ad`
   after switching the swconfig CPU mapping to `6@eth1`. This is a useful
@@ -279,3 +287,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   On boot, first verify whether netdevs enumerate as `eth0`/`eth1` and whether
   `/etc/config/network` now references `eth1.1`/`eth1.2`; then check RX
   counters before changing switch VLANs again.
+- 2026-07-11: The direct-PVID experiment fixed the visible PVID state:
+  runtime logs show `direct` PVID writes/readbacks and `swconfig` now reports
+  WAN port 0 as PVID 2 and LAN ports as PVID 1. Ethernet still does not pass
+  useful traffic: DHCP on `eth1.1`, `eth1.2`, and an OEM-style `eth1.4094`
+  test failed, while RX counters appeared on `eth1.1`/`eth1.4` but `br-lan`
+  did not forward. Do not retest the old CVIDX PVID path; it read back 0.
+  Current next patch explicitly disables proprietary RTL CPU-tag, clears the
+  CPU-tag aware portmask, sets insert mode to "none", and enables VLAN egress
+  keep on EXT_PORT0/CPU so Linux receives ordinary 802.1Q tags.
