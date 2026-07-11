@@ -19,6 +19,18 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Booted latest MR80X v5 initramfs after OpenWrt commit
+  `e0a76b3121` (`qca-nss-dp` module sha256
+  `42e454ba26d8f9c7a316ad1df596a96838718acde1deb84efb771150fa1a6f13`,
+  initramfs sha256
+  `ad2bc8153e8442244e06fe7ca3fae41bcdb059ad9329e33888f2b8d03eb63b59`).
+  Negative Ethernet test: `nss-dp 39d00000.dp2 eth0` links up at 1 Gbps,
+  Realtek init returns 0, physical ports 2/3 and switch CPU port 6 count
+  packets, but Linux `eth0`, `eth0.1`, `eth0.2`, and `br-lan` RX remain zero.
+  Ping to `192.168.8.30` fails with an incomplete neighbor. This means the
+  QCA GMAC flow-control write alone is not enough. Next test mirrors U-Boot
+  more closely by changing the vendor RTL8367S init so EXT_PORT1 is also forced
+  to HSGMII/2500 with SGMII autoneg disabled, instead of RGMII/1000.
 - 2026-07-11: Booted MR80X v5 initramfs
   `b1b1f01680a36736835a6d92145dd00a0e52ddae2b1ecb811817d73d597b4c95`
   after switching QCA ESS to `MAC_MODE_SGMII_PLUS`. Realtek init became
