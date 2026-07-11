@@ -19,6 +19,20 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Booted MR80X v5 initramfs
+  `653d12f7c9cc77723074274f16da9e83c71f92f31370ffb99166c23576d8e5ad`
+  after switching the swconfig CPU mapping to `6@eth1`. This is a useful
+  direction because it matches OEM runtime: OpenWrt created `br-lan` on
+  `eth1.1`, WAN on `eth1.2`, and `nss-dp` reported `eth1` link up at 1 Gbps.
+  Ethernet still failed: `eth1`/`eth1.1`/`br-lan` RX stayed at zero, ARP for
+  `192.168.8.30` stayed incomplete, and `swconfig dev switch0 show` displayed
+  correct VLAN membership but all PVIDs stayed `0`. Runtime `swconfig port ...
+  set pvid` also did not stick. New sources under
+  `tools/firmware-lab/work/source_codes_to_analize` show TP-Link/Realtek
+  examples creating VLANs with `rtk_vlan_set` before `rtk_vlan_portPvid_set`
+  and treating any `ret != RT_ERR_OK` as failure. Current OpenWrt edit changes
+  `rtl8367s.c` to log/convert positive Realtek API errors and apply PVID only
+  after VLAN creation.
 - 2026-07-11: Booted latest MR80X v5 initramfs after OpenWrt commit
   `e0a76b3121` (`qca-nss-dp` module sha256
   `42e454ba26d8f9c7a316ad1df596a96838718acde1deb84efb771150fa1a6f13`,
