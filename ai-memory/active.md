@@ -19,6 +19,25 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: New material in
+  `tools/firmware-lab/work/source_codes_to_analize/rtl83xx` corroborates the
+  current RTL8367S direction: TP-Link code uses `EXT_PORT0` as `CPU_PORT`,
+  forces `MODE_EXT_HSGMII` at 2500M, disables SGMII autonegotiation, and
+  creates per-port VLANs with CPU port 16 tagged. It also exposes a reset path
+  that writes ASIC register `0x1322 = 0x2` after SGMII/HSGMII configuration.
+  OpenWrt commit in progress adds that internal reset to
+  `rtl8367s_mdio.c`. Built test artifacts:
+  module `rtl8367s_gsw.ko`
+  `f1da083caca12c8bdde4c0fdfd1c483e7291890b270d5f52c2cd156a19f2f07f`,
+  initramfs ITB
+  `b8015b5d63d876bac4c15bfb2a5e6ee1bceb0282bd7005c1eec30eb8f78ae851`,
+  factory UBI
+  `ca7724b0fef7d5bf4ea67661e2f4f8077de4f47e816aa5ca9ff723cbd2d3eeab`,
+  sysupgrade
+  `b1ed684607c8ebaf1cde2a10b4464e0b11ec0195e0c39b3e00f32af5718f1241`.
+  Next boot must check whether logs now show `rtl8367s ext0 sgmii nway off`,
+  `rtl8367s ext0 hsgmii force`, and `rtl8367s ext0 sgmii reset reg 0x1322`
+  all returning 0 before changing VLAN/topology again.
 - 2026-07-11: Built a new MR80X v5 initramfs after adding chip ID `0x6642`
   to the RTL8367C ASIC EXT-port helpers. New hashes in
   `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
