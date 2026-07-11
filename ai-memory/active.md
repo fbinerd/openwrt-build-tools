@@ -19,6 +19,20 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: The old sysupgrade suspected by the user was converted to
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/mr80x-v5-old-eth-test-rootfs.ubi`
+  with OpenWrt's own `scripts/ubinize-image.sh` and flashed successfully from
+  U-Boot via `flash rootfs 0x44000000 $filesize`. It boots from NAND and
+  creates `eth1.1`/`eth1.2`, but it did not reliably reproduce working
+  Ethernet. The important clue is in the logs: during swconfig VLAN setup,
+  `rtl8367s: get/set pvid ... hwport=255` and `rtk_vlan_set failed ret=15`
+  appear. That means the Realtek switch API path can leave Linux VLAN devices
+  UP while the ASIC VLAN table is not programmed. Current OpenWrt branch
+  `codex-mr80x-v5-ethernet-debug` now patches `rtl8367s.c` to avoid
+  `rtk_switch_port_L2P_get()` for direct PVID writes, use an explicit
+  swconfig-to-ASIC physical port map `{0,1,2,3,4,7,6}`, and fallback to direct
+  `rtl8367c_setAsicVlan4kEntry()` when `rtk_vlan_set()` fails. The package
+  `package/kernel/rtl8367s-vendor/compile` passed in Docker after this change.
 - 2026-07-11: Initramfs `2b826be3...` carregou por TFTP e confirmou que
   `ptype ext0 tag-only` aplica com sucesso, mas `rtk_vlan_portPvid_set()`
   ainda volta `RT_ERR_OK` enquanto `rtk_vlan_portPvid_get()` le imediatamente
