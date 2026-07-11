@@ -19,6 +19,18 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Built a new MR80X v5 initramfs after adding chip ID `0x6642`
+  to the RTL8367C ASIC EXT-port helpers. New hashes in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  initramfs ITB `e267dbf3e700cfac274b28d39c1dc11cb95110262dc8b0441d0d06c71f983605`,
+  factory UBI `dd4c0ed5deec80010533823e879374d2f0810f4418f302e9fc8a5bdb93310f27`,
+  sysupgrade `1ecd7a2f461c7364fda919e4940cd482d520d6fb3e6d7af70505c92e087a6e81`.
+  TFTP attempt from U-Boot using `serverip=192.168.6.83`, `ipaddr=192.168.6.1`,
+  `tftpblocksize=1468` stalled after OACK with repeated `T`; dnsmasq logged
+  both `failed sending` and `Network is unreachable`. Do not repeat that exact
+  transfer setup. Next attempt should use the other host adapter
+  `enx000e0986bc59`/`192.168.8.2` or a smaller/no-blocksize setup after a
+  manual reboot clears the stuck U-Boot TFTP command.
 - 2026-07-11: Latest RTL8367S swconfig initramfs finally registered
   `switch0 - RTL8367C`, but Ethernet still did not pass traffic. `swconfig`
   showed VLAN membership and physical ports 2/3 had link/counters, while Linux
