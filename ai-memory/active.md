@@ -19,6 +19,20 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Latest RTL8367S swconfig initramfs finally registered
+  `switch0 - RTL8367C`, but Ethernet still did not pass traffic. `swconfig`
+  showed VLAN membership and physical ports 2/3 had link/counters, while Linux
+  `eth0`/`eth0.2` RX stayed at zero and ARP for `192.168.8.2` stayed
+  incomplete. Runtime tests changing the tagged CPU port from `6t` to `5t`
+  did not restore RX. New concrete blocker: kernel logs show
+  `rtl8367s ext0 hsgmii force ret=-1`, `ext0 sgmii nway off ret=-1`, and
+  `ext1 rgmii force ret=-1`, while U-Boot reports all matching Realtek calls
+  with ret 0. Source check found the cause for at least this failure:
+  `rtk_switch_probe()` accepts chip ID `0x6642`, but
+  `rtl8367c_asicdrv_port.c` still rejected `0x6642` in the EXT/HSGMII helper
+  functions and returned `RT_ERR_FAILED`. Next test adds `0x6642` to those
+  switch cases; if the HSGMII logs become ret 0, re-test Ethernet RX before
+  changing topology again.
 - 2026-07-11: Valid RTL8367S vendor-driver boot with initramfs sha256
   `c29c9a7082c697c484ae53eb6f1fb9fdbf22b9bc63f5de37eafa39b13a490f0b`
   proved the new module was loaded. The driver can read the switch over MDIO:
