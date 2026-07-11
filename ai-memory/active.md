@@ -46,6 +46,14 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   TFTP container `recovery-lab-tftp-server-1` is up on UDP/69 and serves the
   same target directory, so U-Boot can request
   `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb`.
+- 2026-07-11: Booted the 2500 Mbps fixed-link test image
+  `8ff2899108de093c96b8cd2bc9d72f19c2f724177218e679af7a1b1635359de0`.
+  It is a negative test: `nss-dp` failed to probe with
+  `dp2: fail to register fixed-link: -22` and no `eth0` netdev was created.
+  Do not repeat `fixed-link { speed = <2500>; }` on MR80X v5 with the current
+  `nss-dp` driver. Revert `dp2.fixed-link` to 1000 and continue with the OEM
+  runtime write candidate `devmem 0x39D00018 32 0xFFFF0004` / QCA GMAC register
+  comparison instead.
 - 2026-07-11: Booted initramfs
   `b8015b5d63d876bac4c15bfb2a5e6ee1bceb0282bd7005c1eec30eb8f78ae851`.
   The RTL8367S side is now much healthier: first init showed
