@@ -19,6 +19,22 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Booted MR80X v5 initramfs
+  `b1b1f01680a36736835a6d92145dd00a0e52ddae2b1ecb811817d73d597b4c95`
+  after switching QCA ESS to `MAC_MODE_SGMII_PLUS`. Realtek init became
+  consistently clean: `ext0 sgmii nway off`, `ext0 hsgmii force`, and ASIC
+  reset `0x1322=0x2` returned 0 even after swconfig resets. The link still did
+  not pass Ethernet: ARP TX from Linux was visible on `eth0` as VLAN 2 and on
+  `eth0.2` untagged, but no ARP replies reached Linux. `eth0` RX improved only
+  to 214 bytes/1 packet, while `eth0.2`/`br-lan` stayed at zero. Runtime PVID
+  changes through swconfig did not fix it. New source material in
+  `tools/firmware-lab/work/source_codes_to_analize/rtl83xx` confirms OEM-style
+  Realtek setup is EXT_PORT0/HSGMII/2500 and `ptype set 16 1` is only VLAN
+  accept-frame type for the CPU port, not a special CPU-port command. The next
+  test aligns the QCA `dp2` fixed-link speed from 1000 to 2500, because the
+  current DTS had `switch_mac_mode = MAC_MODE_SGMII_PLUS` plus
+  `forced-speed = 2500` on the switch side but still forced the Linux MAC link
+  to 1 Gbps.
 - 2026-07-11: Booted initramfs
   `b8015b5d63d876bac4c15bfb2a5e6ee1bceb0282bd7005c1eec30eb8f78ae851`.
   The RTL8367S side is now much healthier: first init showed
