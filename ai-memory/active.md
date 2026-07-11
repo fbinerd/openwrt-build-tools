@@ -35,6 +35,17 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   current DTS had `switch_mac_mode = MAC_MODE_SGMII_PLUS` plus
   `forced-speed = 2500` on the switch side but still forced the Linux MAC link
   to 1 Gbps.
+- 2026-07-11: Built MR80X v5 after aligning `dp2.fixed-link` to 2500 Mbps.
+  Test artifacts in `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  initramfs ITB
+  `8ff2899108de093c96b8cd2bc9d72f19c2f724177218e679af7a1b1635359de0`,
+  factory UBI
+  `e74f27cf9daf8d012db2a06b48fcea505f0e096bab61c72d40b666e9774cdfd0`,
+  sysupgrade
+  `5b1a2bf60f9dc291538a20433f8c11b150dd2c261c1c6a165a471e5feac6a6ff`.
+  TFTP container `recovery-lab-tftp-server-1` is up on UDP/69 and serves the
+  same target directory, so U-Boot can request
+  `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb`.
 - 2026-07-11: Booted initramfs
   `b8015b5d63d876bac4c15bfb2a5e6ee1bceb0282bd7005c1eec30eb8f78ae851`.
   The RTL8367S side is now much healthier: first init showed
