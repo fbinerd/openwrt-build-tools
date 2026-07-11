@@ -209,3 +209,27 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   host times out, static `192.168.8.2` cannot ping `192.168.8.1`, and counters
   show LAN link/RX inconsistencies. Avoid running multiple tcpdump instances in
   initramfs; RAM pressure caused OOM kills of `netifd`/`wpa_supplicant`.
+- 2026-07-11: New source material in
+  `tools/firmware-lab/work/source_codes_to_analize/` reinforces the OEM
+  Realtek path: `rtl83xx/src/extphysw.c` defines `CPU_PORT EXT_PORT0`, forces
+  `EXT_PORT0` to `MODE_EXT_HSGMII` at `PORT_SPEED_2500M`, disables SGMII
+  autoneg, then writes Realtek register `0x1322 = 0x2`. It also shows
+  `ptype set <portid> <type>` is just `rtk_vlan_portAcceptFrameType_set()`;
+  the OEM `ptype set 16 1` means CPU/EXT port accepts tagged frames only.
+  Do not retest `dp2.fixed-link speed=<2500>`: OpenWrt `nss-dp` rejected it
+  with `fail to register fixed-link: -22` and no `eth0`. Current viable hybrid
+  test is Realtek HSGMII/SGMII_PLUS plus Linux `dp2` fixed-link 1G.
+- 2026-07-11: Rebuilt `qca-nss-dp` after confirming the OEM-equivalent GMAC2
+  flow-control patch existed but stale root modules were still used. The module
+  hash now copied into `root-qualcommax`, `root.orig-qualcommax`, and staging is
+  `e660fc309463f4e6b167742bc887b6e14b8adbe3c3dbb60ce974e7c20cf915e1`.
+  Fresh MR80X v5 images in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  initramfs ITB
+  `6d8760a280a643e7c447cdb66cea689678ece22e62692cb32803ce4daf1a9d32`,
+  factory UBI
+  `bda4562a6674c97fea5b2fcd236b2783731d26d718d712737b4bb6abd0f720a9`,
+  sysupgrade
+  `334a1213b32230c64fc10ef562f59d40e67bda0e9149362fc3903d4247889b19`.
+  Next boot must check whether GMAC2 receives frames after this patch before
+  changing VLAN topology again.
