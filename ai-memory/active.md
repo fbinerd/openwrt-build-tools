@@ -254,3 +254,14 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   next test restores EXT1 RGMII and instead aligns the OpenWrt topology with
   the OEM FDT/runtime by enabling `dp1` in SGMII so the Realtek conduit can be
   `eth1`, then configuring swconfig as `6@eth1`.
+- 2026-07-11: Built the OEM-eth1-conduit test at OpenWrt commit `a76ec66709`.
+  It restores EXT1 RGMII after the failed EXT1-HSGMII test, enables `dp1` as
+  SGMII/fixed-link 1G, keeps `dp2` as SGMII/fixed-link 1G, and changes MR80X
+  swconfig CPU mapping to `6@eth1`. Fresh image hashes in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`: initramfs ITB
+  `653d12f7c9cc77723074274f16da9e83c71f92f31370ffb99166c23576d8e5ad`,
+  factory UBI `491cd3f37bb46b2b3ac4287862715f6a35ac3ec4c9d80acd9b1978860f456dae`,
+  sysupgrade `3b40862936c2265159f65fab465a772070c3a5350f6e53b2787e9f0aa2125bf4`.
+  On boot, first verify whether netdevs enumerate as `eth0`/`eth1` and whether
+  `/etc/config/network` now references `eth1.1`/`eth1.2`; then check RX
+  counters before changing switch VLANs again.
