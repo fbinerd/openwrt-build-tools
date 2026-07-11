@@ -19,6 +19,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Current OpenWrt Ethernet direction is to test the existing vendor
+  RTL8367S MDIO/swconfig driver instead of DSA. Commit `ca5b7b6960` adds
+  `kmod-rtl8367s-vendor` and a `switch0` board config using `6@eth0`,
+  `0:wan`, `1:lan:3`, `2:lan:2`, `3:lan:1`. The first vendor-driver boot was
+  inconclusive because the built root still had stale DSA board config and
+  lacked `/sbin/swconfig`; do not treat that image as a failed driver test.
 - Created shared `ai-memory/` area for agents to record live context.
 - 2026-07-10: OEM MR80X v5 rootfs rebuild must preserve the real `ubi_rootfs`
   layout: volume 1 has 157 LEBs, not 160. Also build SquashFS with plain XZ

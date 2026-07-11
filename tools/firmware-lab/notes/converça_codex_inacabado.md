@@ -893,3 +893,36 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
 - Cuidado: rodar dois `tcpdump` em paralelo nessa initramfs grande causou OOM e
   matou `netifd`/`wpa_supplicant`. Para proximos testes usar `ip -s`, `bridge
   fdb`, ou apenas um `tcpdump -s 96 -c N` por vez.
+
+## 2026-07-11 - Teste com driver vendor RTL8367S/switchdev antigo
+
+- O firmware OEM nao usa DSA Realtek; ele usa um driver vendor RTL8367S com
+  `swconfig`/VLAN 802.1Q normal no conduit do SoC.
+- Por isso o proximo teste OpenWrt passou a remover o node DSA
+  `realtek,rtl8365mb` do DTS e a carregar um pacote novo
+  `kmod-rtl8367s-vendor`, reaproveitando o driver vendor que ja existia em
+  `target/linux/mediatek/files/drivers/net/phy/rtk`.
+- Commit OpenWrt relevante:
+  - `ca5b7b6960 qualcommax: mr80x-v5: test vendor RTL8367S driver`.
+- A primeira imagem desse teste nao deve ser repetida como conclusao:
+  - initramfs sha256 `cfcd1fbb621542b9a5017fcd58f3f65a569a657f638d5a0bc2e6b67bc631e6be`;
+  - ela carregou `rtl8367s_gsw` e `swconfig.ko`, e o platform device
+    `/sys/bus/platform/drivers/rtk-gsw/rtl8367s-switch` ficou bindado;
+  - porem o root staging ainda tinha `board.d/02_network` antigo/DSA, entao
+    `/etc/config/network` nasceu errado e o switch nao foi configurado como
+    `switch0`;
+  - tambem faltava o binario userspace `/sbin/swconfig`, entao nao dava para
+    inspecionar/aplicar a tabela VLAN pelo shell.
+- O erro `port_bmp doesn't exist!` tambem aparece no OEM funcional, portanto
+  nao deve ser tratado como causa principal da Ethernet sem trafego.
+- O proximo teste valido precisa confirmar antes do boot:
+  - `board.d/02_network` no root da imagem tem
+    `ucidef_add_switch "switch0" "6@eth0" "0:wan" "1:lan:3" "2:lan:2" "3:lan:1"`;
+  - o manifesto lista `swconfig`;
+  - `/sbin/swconfig` existe dentro de `root-qualcommax`.
+- Se ainda falhar com essas tres condicoes, investigar no roteador:
+  - `swconfig dev switch0 show`;
+  - `cat /proc/driver/rtl8367s/*` se existirem entradas proc;
+  - `ip -s link show eth0` e interfaces VLAN geradas;
+  - comparar PVID/VLAN com OEM: CPU port 6 tagged, WAN PHY0, LAN PHY1-3 para o
+    MR80X v5 fisico de 3 LANs + WAN.
