@@ -19,6 +19,28 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Booted initramfs
+  `b8015b5d63d876bac4c15bfb2a5e6ee1bceb0282bd7005c1eec30eb8f78ae851`.
+  The RTL8367S side is now much healthier: first init showed
+  `rtk_switch_init`, VLAN reset/init, `ext0 sgmii nway off`, HSGMII force,
+  ASIC reset `0x1322=0x2`, EXT1 RGMII force/delay, and PHY enable all returning
+  0. Runtime `swconfig dev switch0 show` showed physical ports 2 and 3 with
+  link/counters, and CPU swconfig port 6 also had MIB traffic. However Linux
+  `eth0`, `eth0.1`, `eth0.2`, and `br-lan` RX counters stayed at 0. Therefore
+  do not keep debugging basic Realtek MDIO/VLAN first; the remaining blocker is
+  likely QCA NSS/GMAC/SerDes mode. OEM FDT has `switch_mac_mode = <0x0c>`,
+  which maps to `MAC_MODE_SGMII_PLUS`, while OpenWrt DTS still had
+  `MAC_MODE_SGMII_CHANNEL0`. Commit `d13f6bcfbc` changes MR80X v5 to
+  `MAC_MODE_SGMII_PLUS`. Built test artifacts:
+  initramfs ITB
+  `b1b1f01680a36736835a6d92145dd00a0e52ddae2b1ecb811817d73d597b4c95`,
+  factory UBI
+  `d9ea03e58bb5c04053a329374601f2c3f80aea8bec86b351d1f4422909b44841`,
+  sysupgrade
+  `f9aeb6f1c97bc8750429a25baf9ad1ded13aafb0bb09293c35482cc39747441f`.
+  Next boot must check if `eth0` RX starts counting; if yes, focus on LAN/WAN
+  VLAN naming. If no, compare OEM `devmem 0x39D00018 32 0xFFFF0004` and NSS DP
+  driver setup.
 - 2026-07-11: New material in
   `tools/firmware-lab/work/source_codes_to_analize/rtl83xx` corroborates the
   current RTL8367S direction: TP-Link code uses `EXT_PORT0` as `CPU_PORT`,
