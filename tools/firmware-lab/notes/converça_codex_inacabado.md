@@ -974,3 +974,40 @@ Testes Ethernet no initramfs `r35275+3-273b186ac3`:
     `switch_cpu_bmp = <0x40>`, `switch_lan_bmp = <0x1e>`, `reset_gpio = <0x27>`;
   - OEM `mdio@90000` tambem declara `phy-reset-gpio = GPIO26`, enquanto o
     switch externo usa reset GPIO39. O nosso node vendor usa GPIO39.
+
+## 2026-07-11 - Boot limpo com vendor/swconfig e proximo teste PHY ID 0
+
+- A imagem initramfs sha256
+  `7ca443d77daa30ac333e37a8dea2ea20cf49dc1ebc512cd3a0297ee97583c0f8`
+  foi bootada limpa por TFTP.
+- Resultado desse boot:
+  - sem stall/trace no `register_switch()`;
+  - `dmesg` mostrou `[rtl8367s_swconfig_init]`;
+  - `swconfig list` mostrou `Found: switch0 - RTL8367C`;
+  - `swconfig dev switch0 show` ainda retornou `???` para PVID/link/VLAN;
+  - `eth0`/`eth0.2` transmitiram, mas RX ficou zero;
+  - host com `192.168.8.2/24` em `enx000e0986bc59` nao pingou
+    `192.168.8.1` e ARP ficou incompleto.
+- Conclusao: o driver vendor agora registra o switch corretamente, mas a API
+  Realtek ainda nao esta lendo/escrevendo o RTL8367S de verdade pelo caminho
+  MDIO/SMI.
+- Comparacao OEM importante:
+  - o `qca-ssdk.ko` OEM contem strings Realtek (`driver/rtl8367s`,
+    `rtk_switch_init ok`, `initial external switch rtl8367 failed`), mas o
+    `qca-ssdk` do OpenWrt nao contem essas strings;
+  - portanto o OEM parece ter uma extensao Realtek dentro do SSDK, nao um DSA
+    Realtek padrao.
+- Proximo teste preparado no OpenWrt:
+  - `MDC_MDIO_PHY_ID` deixou de ser hardcoded em `smi.c`;
+  - `kmod-rtl8367s-vendor` agora compila com `-DMDC_MDIO_PHY_ID=0`;
+  - `rtl8367s_mdio.c` agora loga de forma limitada as primeiras transacoes
+    MDIO (`phy`, `reg`, `data`/`ret`).
+- Imagem nova para TFTP:
+  - initramfs:
+    `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage.itb`;
+  - sha256:
+    `454e74f130df27415bb289393edec7bf10ffe77d6f7977fa443271903a2f0641`;
+  - sysupgrade sha256:
+    `0feb43987d6b97be9cd493c5fbc11d22150c2280a4e3f757734f9cae8ccef3e9`.
+- Este teste descarta ou confirma a hipotese do PHY ID Realtek. Se falhar,
+  guardar o `dmesg` com `rtl8367s-mdio` antes de trocar para outra abordagem.

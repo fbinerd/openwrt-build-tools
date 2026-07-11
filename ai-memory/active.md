@@ -33,6 +33,18 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `swconfig list` stuck and a `register_switch()` trace. Next test is a clean
   TFTP boot of initramfs sha256
   `7ca443d77daa30ac333e37a8dea2ea20cf49dc1ebc512cd3a0297ee97583c0f8`.
+- 2026-07-11: Clean boot of initramfs sha256 `7ca443...` did not trace or
+  stall, and `swconfig list` showed `switch0 - RTL8367C`, but all swconfig
+  PVID/link/VLAN data still came back as `???`; `eth0`/`eth0.2` RX stayed zero
+  and host ping to `192.168.8.1` failed. That means switch registration is
+  working but the vendor Realtek API still is not really reading/writing the
+  RTL8367S over MDIO/SMI.
+- 2026-07-11: New OpenWrt test changes `MDC_MDIO_PHY_ID` from hardcoded 29 to
+  build-time override and builds the vendor driver with PHY ID 0 plus limited
+  MDIO transaction logs. New initramfs sha256 is
+  `454e74f130df27415bb289393edec7bf10ffe77d6f7977fa443271903a2f0641`.
+  This specifically tests the vendor code comment "PHY ID 0 or 29" against the
+  OEM FDT, which declares external switch PHY children at 0..3 on `mdio@90000`.
 - Created shared `ai-memory/` area for agents to record live context.
 - 2026-07-10: OEM MR80X v5 rootfs rebuild must preserve the real `ubi_rootfs`
   layout: volume 1 has 157 LEBs, not 160. Also build SquashFS with plain XZ
