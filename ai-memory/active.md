@@ -29,6 +29,15 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `0x6642`. Current test adds `0x6642` as RTL8367C-compatible. If this boots
   with `rtk_switch_init ret=0`, continue with CPU/ext port and VLAN traffic
   tests instead of re-testing MDIO access.
+- 2026-07-11: Test image sha256
+  `f189e711707865b689a5d5793b203b7af03564c65145dea6b6778bbb7da0560f`
+  confirmed `rtk_switch_init ret=0`, `rtk_vlan_reset/init ret=0`, and VLAN/PVID
+  writes all return 0 after adding chip ID `0x6642`. However `swconfig list`
+  was empty and `/etc/rc.d/S20network` logged "Failed to connect to the
+  switch" because DTS property `mediatek,port_map = "wllll"` takes the fixed
+  VLAN path in `rtl8367s_mdio.c` and skips `rtl8367s_swconfig_init()`. Current
+  next test removes that property so `switch0` can register and UCI board.d can
+  configure VLANs.
 - 2026-07-11: Current OpenWrt Ethernet direction is to test the existing vendor
   RTL8367S MDIO/swconfig driver instead of DSA. Commit `ca5b7b6960` adds
   `kmod-rtl8367s-vendor` and a `switch0` board config using `6@eth0`,
