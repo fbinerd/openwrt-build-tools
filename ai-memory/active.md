@@ -19,6 +19,29 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-12: Investigated GPT Web note comparing initramfs vs sysupgrade:
+  sysupgrade logs showed RTL8367S MDIO indirect reads returning `0xffff` and
+  `rtk_switch_init ret=-1`, while initramfs showed valid MDIO values and
+  `rtk_switch_init ret=0`. OpenWrt commit `8fa777981c`
+  (`rtl8367s: retry and propagate MDIO init failures`) addresses the actionable
+  driver issues: the Realtek MDC/MDIO SMI backend now propagates callback
+  read/write failures instead of discarding them, `mii_mgr_read/write` return
+  `RT_ERR_SMI` on MDIO bus errors, reset assert/deassert timing was lengthened,
+  `rtk_switch_init()` is retried up to five reset cycles, SGMII/RGMII setup now
+  returns errors, and platform probe no longer registers swconfig after a dead
+  switch init. `RT_ERR_SMI`/`RT_ERR_CHIP_NOT_FOUND` map to `-EPROBE_DEFER` so a
+  bad early sysupgrade timing window can be retried by the kernel. Package
+  `package/kernel/rtl8367s-vendor/compile` passed, then full Docker build
+  passed. Artifacts tagged `rtl8367s-mdio-retry`: initramfs ITB
+  `882fe9364e7e5865c72535e74c52eb70e732503205f69044a59bf318a700d613`,
+  factory UBI
+  `de39d05aa8adf2e5ef9f798b1c558b3a2d6c08e3845d12e7926f2a91cd6c8595`,
+  sysupgrade
+  `229f08e623166b2fd3aa147dd8c0736b06ec5c58f6cdb3e1941bd92efeb59802`.
+  Next validation should specifically boot/install the sysupgrade image with
+  `sysupgrade -n` and check for `rtl8367s rtk_switch_init attempt=... ret=0`
+  plus `swconfig dev switch0 show`; if probe defers repeatedly, collect dmesg
+  around `rtl8367s reset` and MDIO reads.
 - 2026-07-12: Investigated the MR80X v5 boot-log warnings after Ethernet was
   already confirmed working with independent VLANs. The repeated
   `rtk_switch_init` / VLAN reset messages are most likely caused by our own
