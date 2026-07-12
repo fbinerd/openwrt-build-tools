@@ -33,7 +33,13 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   are LAN/PVID1 (link states observed: port1 1G, port2 100M, port3 1G), port4
   is down/unconnected, port6 is CPU/tagged, port5 is EXT1/no useful physical
   user port for this MR80X v5 mapping. VLANs remain `vlan1: 1 2 3 6t` and
-  `vlan2: 0 6t`.
+  `vlan2: 0 6t`. Built artifacts tagged `lan-zone-wan` from this state:
+  initramfs ITB
+  `b4bda9a00934daed6b1ef874407750fafe7be06c464f12abed637fe6213422a9`,
+  factory UBI
+  `aa42a6ed2f8ee59128f642d3a6884a99071d62f89ac6a27e5e0ad6af19cc3d3d`,
+  sysupgrade
+  `08e1bf9eb810a41cb4fec507480e65dc2afe561b25ec138d04ba899e6d1df308`.
 - 2026-07-12: User reported the `probe-vlan2-fixed` image sometimes obtains
   DHCP and pings, but after reload both `eth1.1` and `eth1.2` become
   inaccessible; `eth1.3`/`eth1.4` never work. Root cause is the diagnostic
