@@ -475,3 +475,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   lan3 base+3, 2.4 GHz Wi-Fi base+4, 5 GHz Wi-Fi base+5. Do not return to the
   static `192.168.8/9/10.1` LAN-server profile unless deliberately testing DHCP
   server behavior.
+- 2026-07-12: Built and preserved artifacts for OpenWrt commit `88a6da7c88`
+  with the working DHCP-client Ethernet profile and deterministic MAC offsets.
+  Artifacts in `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  initramfs `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage-working-dhcp-mac.itb`
+  sha256 `ba66db9131a1f67e6c0241827e336806709f555c234e9f3d69bff448873660d7`,
+  factory UBI sha256 `3e16db65ceca4f41294b76263bb785283721e1ba12b25042e969dea6d53159b8`,
+  sysupgrade sha256 `0d09f12e2ac13709ee6f1d4971eea782433d5d0f6294b3edb27cd7d1b992c751`.
+  This build was not booted automatically because the router was left running
+  the confirmed-good live test state for further inspection.
