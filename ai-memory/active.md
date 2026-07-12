@@ -334,3 +334,19 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   adapter re-enumerated from `/dev/ttyUSB0` to `/dev/ttyUSB1`: broker/read
   works from old logs, but new writes produce no new output. Recreate the TTL
   session or type the TFTP commands manually before testing this clean image.
+- 2026-07-11: Booted the clean `vlan4k-fallback-clean` image. It still did not
+  restore Ethernet. Current-boot checks showed `eth1`, `eth1.1`, and `eth1.2`
+  TX increasing but RX stuck at zero. `swconfig` later reported all PVIDs as
+  4095 and dmesg showed `get pvid ... hwport=255`, even though early boot
+  PVID writes initially logged correct hwports. To eliminate possible mutable
+  table corruption, OpenWrt commit `e726e45fac` replaces the port-map arrays
+  with literal `switch` helpers. Fresh artifacts tagged `literal-portmap`:
+  initramfs ITB
+  `87e384336978db3752b8ef1c261ebd4d0fbbb4043353ed12fefc7428f651e7fb`,
+  factory UBI
+  `5b80795c4e09df326c61db75b4c363c02f8dfb536fa9ca0d03f53be83eb7154d`,
+  sysupgrade
+  `7bbbc3cdfeeff72b9a5720a69730415e22169d5ed4f5a7460ab348b526669cbf`.
+  Next test must boot `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage-literal-portmap.itb`
+  and check whether `hwport=255` disappears. If it disappears but RX remains
+  zero, stop chasing swconfig PVID and return to GMAC/SGMII/CPU-port path.
