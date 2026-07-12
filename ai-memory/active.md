@@ -317,3 +317,20 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   Current next patch explicitly disables proprietary RTL CPU-tag, clears the
   CPU-tag aware portmask, sets insert mode to "none", and enables VLAN egress
   keep on EXT_PORT0/CPU so Linux receives ordinary 802.1Q tags.
+- 2026-07-11: Returned OpenWrt to latest `codex-mr80x-v5-ethernet-debug`
+  and clean-rebuilt the RTL8367S vendor package after commit `9a5aa6294e`.
+  The previous `vlan4k-fallback` image was stale and still logged `phyport`;
+  ignore that boot as invalid. Clean artifacts in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/` are:
+  initramfs ITB
+  `1f1ac4cd62a96a64d3d11e1f9fa69c3af013215de5e7d9ffb34ec952dcf290e2`,
+  factory UBI
+  `d91931e26054443d216c6ff2da4724c949eb7aed02b44d6336de77d7968d2cbf`,
+  sysupgrade
+  `87f521a97c8091c5d0dbdb2b75d91e8ca448f408b790e922404f66d8cacfa60a`.
+  `strings` on `rtl8367s_gsw.ko` confirms `hwport`, `direct pvid`, and
+  `vlan4k fallback` strings are present. Router is currently stopped at
+  U-Boot, but automated TX via recovery-lab broke after the USB serial
+  adapter re-enumerated from `/dev/ttyUSB0` to `/dev/ttyUSB1`: broker/read
+  works from old logs, but new writes produce no new output. Recreate the TTL
+  session or type the TFTP commands manually before testing this clean image.
