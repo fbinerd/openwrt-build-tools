@@ -19,6 +19,26 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-12: User reported the `probe-vlan2-fixed` image sometimes obtains
+  DHCP and pings, but after reload both `eth1.1` and `eth1.2` become
+  inaccessible; `eth1.3`/`eth1.4` never work. Root cause is the diagnostic
+  overlay still creating many DHCP clients (`eth1.1` through `eth1.5`) and
+  competing routes/ubus events. Runtime stable config was applied on the
+  router: only `lan` static on `eth1.1` (`192.168.8.1/24`, DHCP server) and
+  `wan` DHCP on `eth1.2` (metric 20), plus `wwan` metric 10. VLANs remain
+  `1 2 3 6t` for LAN and `0 6t` for WAN. Runtime test showed `lan` up and
+  `wan` obtained lease `192.168.1.95` from `192.168.1.254`. The ignored local
+  overlay `openwrt/files/etc/uci-defaults/99_mr80x-v5-ethernet-dhcp-probe`
+  was changed to this stable LAN/WAN layout; despite the filename, it is no
+  longer a VLAN probe. New artifacts tagged `stable-lan-wan`:
+  initramfs ITB
+  `72005538f0753d4bd51099092b2eddf611aebc74faedd838352566e66ba30226`,
+  factory UBI
+  `fa64c527edeebab71e6800639933a8c17f7f09a1c35ac60e9474347f357d0e76`,
+  sysupgrade
+  `759f37401da9c8084b0aeff1b662587545ac925abc17bb07fb6a972b8e0e0b41`.
+  Note: do not expect `eth1.3`/`eth1.4` to work on this hardware; MR80X v5
+  has only LAN1-LAN3 and WAN in the confirmed mapping.
 - 2026-07-12: User booted `egress-tag-original` and reported LAN1/LAN2/LAN3
   get DHCP on `eth1.1`, while physical WAN still had no lease. Runtime
   inspection proved this was not a driver failure: `port0` had physical link
