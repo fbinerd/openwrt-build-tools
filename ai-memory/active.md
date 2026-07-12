@@ -461,3 +461,17 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   Next test must boot `openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage-literal-portmap.itb`
   and check whether `hwport=255` disappears. If it disappears but RX remains
   zero, stop chasing swconfig PVID and return to GMAC/SGMII/CPU-port path.
+- 2026-07-12: Confirmed all MR80X v5 Ethernet paths working with independent
+  swconfig VLANs on the RTL8367S vendor driver. Working map captured from TTL:
+  VLAN1 `1 6t` => `lan1`/`eth1.1`, VLAN2 `0 6t` => `wan`/`eth1.2`,
+  VLAN3 `2 6t` => `lan2`/`eth1.3`, VLAN4 `3 6t` => `lan3`/`eth1.4`.
+  The user-tested working profile has `lan1`, `lan2`, `lan3`, and `wan` as DHCP
+  clients. The router received `192.168.1.53` on `eth1.2` and `192.168.1.102`
+  on `phy0-sta0` while connected to the RB/Tassotti network. Firewall state
+  has independent zones `lan1`, `lan2`, and `lan3` with input/output ACCEPT and
+  forward REJECT; the default `wan` zone carries only `wan6`. OpenWrt commit
+  `88a6da7c88` persists this working profile in `files/etc/uci-defaults/` and
+  adds deterministic MAC offsets: lan1 base+0, wan base+1, lan2 base+2,
+  lan3 base+3, 2.4 GHz Wi-Fi base+4, 5 GHz Wi-Fi base+5. Do not return to the
+  static `192.168.8/9/10.1` LAN-server profile unless deliberately testing DHCP
+  server behavior.
