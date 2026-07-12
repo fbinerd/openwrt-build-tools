@@ -41,6 +41,21 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   Then test whether DHCP offers move from untagged parent `eth1` into
   `eth1.2`; if not, test CPU port tag mode `EG_TAG_MODE_KEEP` or
   `EG_TAG_MODE_REAL_KEEP` as the next isolated image.
+- 2026-07-11: Router was rebooted and stopped at U-Boot, but automated serial
+  TX stopped working after the broker reset. The prompt was visible in the old
+  log as `IPQ5018#`, but neither the broker socket, direct write inside the
+  `serial_ttyUSB0` container, nor a one-shot root `python:3.12-slim` container
+  opening `/dev/ttyUSB0` could get `printenv`/`help` responses. Do not assume
+  the new `egress-tag-original` image was booted yet. Manual U-Boot commands
+  to boot it are:
+  `setenv ipaddr 192.168.6.1`,
+  `setenv serverip 192.168.6.83`,
+  `setenv netmask 255.255.255.0`,
+  `setenv tftpblocksize 1468`,
+  `setenv tftptimeout 3000`,
+  `setenv tftptimeoutcountmax 10`,
+  `tftpboot 0x44000000 openwrt-qualcommax-ipq50xx-mercusys_mr80x-v5-initramfs-uImage-egress-tag-original.itb`,
+  `bootm 0x44000000`.
 - 2026-07-11: The old sysupgrade suspected by the user was converted to
   `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/mr80x-v5-old-eth-test-rootfs.ubi`
   with OpenWrt's own `scripts/ubinize-image.sh` and flashed successfully from
