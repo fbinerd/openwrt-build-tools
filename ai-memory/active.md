@@ -19,6 +19,24 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-12: User booted `egress-tag-original` and reported LAN1/LAN2/LAN3
+  get DHCP on `eth1.1`, while physical WAN still had no lease. Runtime
+  inspection proved this was not a driver failure: `port0` had physical link
+  up at 1 Gbps, but VLAN 2 was empty and `port0 pvid=0` because the local
+  diagnostic overlay `openwrt/files/etc/uci-defaults/99_mr80x-v5-ethernet-dhcp-probe`
+  deletes all UCI switch sections. Manually programming
+  `vlan1 ports '1 2 3 6t'`, `vlan2 ports '0 6t'`, and `port0 pvid 2`
+  immediately let `udhcpc -i eth1.2` obtain `192.168.1.53` from
+  `192.168.1.254`; `eth1.2` RX counters increased. Conclusion: RTL8367S
+  CPU-port egress/tagging and the physical WAN mapping (`0:wan`) are working
+  in this image. Do not repeat low-level RTL8367S/SGMII debugging for this
+  specific WAN symptom. Next build must either remove the diagnostic overlay
+  entirely for a normal image, or include explicit `switch0` UCI sections with
+  VLAN 1 LAN and VLAN 2 WAN. Also, for U-Boot TFTP use only the two short
+  command lines requested by the user:
+  `setenv ipaddr 192.168.6.1 && setenv serverip 192.168.6.83`
+  and
+  `tftpboot 0x44000000 <image>.itb && bootm 0x44000000`.
 - 2026-07-11: Booted `literal-portmap` and confirmed the previous
   `hwport=255` corruption is gone. Runtime now shows direct PVID reads/writes
   with correct hwports and `eth1` receives real frames, but `eth1.1` and
