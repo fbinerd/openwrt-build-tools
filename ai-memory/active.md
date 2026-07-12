@@ -46,6 +46,12 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `e20261d3e9d3c9acbf846e3c20f70768f3e98b371a0b98f3088a43dddf47d743`,
   sysupgrade
   `0715eac36257808a8f24990786eff2ae05c86040746b308aa28d3cf52216ccca`.
+  This image was booted successfully with the two-line U-Boot flow. Validation
+  on the router confirmed `swconfig vlan 1 -> 1 2 3 6t`, `vlan 2 -> 0 6t`,
+  `port0 pvid=2`, and `dhcp_eth1_2` obtained lease `192.168.1.94` from
+  `192.168.1.254`. The diagnostic image still also lets `dhcp_eth1_1` get a
+  lease if the upstream network is plugged into a LAN port; that is expected
+  for the probe overlay, not the final production LAN behavior.
 - 2026-07-11: Booted `literal-portmap` and confirmed the previous
   `hwport=255` corruption is gone. Runtime now shows direct PVID reads/writes
   with correct hwports and `eth1` receives real frames, but `eth1.1` and
