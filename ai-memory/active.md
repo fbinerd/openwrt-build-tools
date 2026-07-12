@@ -19,6 +19,21 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-12: Stable MR80X v5 test overlay is now committed in OpenWrt as
+  commit `6ac1f572a4` (`mr80x-v5: add stable lan wan test overlay`), despite
+  the repo normally ignoring `files/`. It creates `lan` on `eth1.1`
+  (`192.168.8.1/24` with DHCP server), `wan` on `eth1.2` (DHCP client,
+  metric 20), keeps `wwan` as Wi-Fi client, and intentionally places both
+  `wan`/`eth1.2` and `wwan` in the firewall `lan` zone for easier test access.
+  Runtime firewall check confirmed `firewall.@zone[0].network='lan' 'wan'
+  'wwan'` and the `wan` zone only has `wan6`. Runtime ping via `eth1.2` to
+  `192.168.1.254` succeeded 3/3 with sub-millisecond latency. Runtime ping via
+  `eth1.1` to `192.168.8.30` failed 3/3 in the current cabling/state. Current
+  Realtek switch map from `swconfig`: port0 is WAN/PVID2/link 1G, ports 1/2/3
+  are LAN/PVID1 (link states observed: port1 1G, port2 100M, port3 1G), port4
+  is down/unconnected, port6 is CPU/tagged, port5 is EXT1/no useful physical
+  user port for this MR80X v5 mapping. VLANs remain `vlan1: 1 2 3 6t` and
+  `vlan2: 0 6t`.
 - 2026-07-12: User reported the `probe-vlan2-fixed` image sometimes obtains
   DHCP and pings, but after reload both `eth1.1` and `eth1.2` become
   inaccessible; `eth1.3`/`eth1.4` never work. Root cause is the diagnostic
