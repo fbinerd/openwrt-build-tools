@@ -19,6 +19,28 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-11: Booted `literal-portmap` and confirmed the previous
+  `hwport=255` corruption is gone. Runtime now shows direct PVID reads/writes
+  with correct hwports and `eth1` receives real frames, but `eth1.1` and
+  `eth1.2` RX remain zero. `tcpdump` showed DHCP offers arriving untagged on
+  parent `eth1`, while OpenWrt DHCP discovers leave through VLAN subinterfaces.
+  Therefore do not keep chasing basic VLAN membership/PVID for this stage:
+  the next likely blocker is CPU-port egress tag handling. OpenWrt commit
+  `29d4e3ff9d` changes RTL8367S init to set EXT0/CPU egress tag mode back to
+  `EG_TAG_MODE_ORI` and clears `VlanEgressKeep` instead of forcing `0x7ff`.
+  Built test artifacts tagged `egress-tag-original` in
+  `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/`:
+  initramfs ITB
+  `4bea364e80b5e98ada0bd19b2de6e864ceb045025c77e88a20716d0164dd8a7a`,
+  factory UBI
+  `12af69597cc78afcefc67d98df209dd1d62d846e79fbebcd07015fc9e0223913`,
+  sysupgrade
+  `736c0579b619c4acc5bd67e25e191f7a9852ac09617aa0e6b81a0c32c99a78ca`.
+  On boot, check dmesg for `vlan egress tag ... ori ret=0`,
+  `vlan egress keep clear ... ret=0`, and `egress keep get ... val=0x0`.
+  Then test whether DHCP offers move from untagged parent `eth1` into
+  `eth1.2`; if not, test CPU port tag mode `EG_TAG_MODE_KEEP` or
+  `EG_TAG_MODE_REAL_KEEP` as the next isolated image.
 - 2026-07-11: The old sysupgrade suspected by the user was converted to
   `/home/fabiano/opw/openwrt/bin/targets/qualcommax/ipq50xx/mr80x-v5-old-eth-test-rootfs.ubi`
   with OpenWrt's own `scripts/ubinize-image.sh` and flashed successfully from
