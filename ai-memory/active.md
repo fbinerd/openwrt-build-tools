@@ -19,6 +19,24 @@ Keep writing short notes here when the focus changes or when a new blocker appea
 
 ## Recent Notes
 
+- 2026-07-12: Investigated the MR80X v5 boot-log warnings after Ethernet was
+  already confirmed working with independent VLANs. The repeated
+  `rtk_switch_init` / VLAN reset messages are most likely caused by our own
+  uci-default overlay forcing `wifi reload` and `/etc/init.d/network restart`
+  during boot, not by an autonomous RTL8367S driver crash loop. OpenWrt commit
+  `9c7f9478c7` (`mr80x-v5: avoid duplicate network reload defaults`) removes
+  those forced reloads from `99_mr80x-v5-stable-lan-wan` and commits the older
+  `99_enable-wireless-mr80x-v5` overlay as an explicit no-op so it cannot
+  fight the stable Ethernet/Wi-Fi setup. Other warnings triage: early
+  `Invalid MAC@` happens before preinit can read `/tmp/tp_data/default-mac`
+  from UBIFS; runtime MACs are still fixed by `10_fix_eth_mac`, UCI
+  `macaddr`, and ath11k caldata patching. `Cannot parse /etc/fw_env.config`
+  is covered by the MR80X v5 uboot-envtools entry for `0:appsblenv` /
+  `0:APPSBLENV`, but must be verified on the next boot image. UBI bad-PEB
+  reserve warnings are partition-space/UBI geometry warnings and should not be
+  fixed by touching `tp_data`; repartitioning/rootfs sizing would be a separate
+  risky task. PSCI and U-Boot FDT fixup warnings are non-fatal firmware/DT
+  compatibility noise unless a concrete device failure is observed.
 - 2026-07-12: Stable MR80X v5 test overlay is now committed in OpenWrt as
   commit `6ac1f572a4` (`mr80x-v5: add stable lan wan test overlay`), despite
   the repo normally ignoring `files/`. It creates `lan` on `eth1.1`
