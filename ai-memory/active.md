@@ -484,3 +484,13 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   sysupgrade sha256 `0d09f12e2ac13709ee6f1d4971eea782433d5d0f6294b3edb27cd7d1b992c751`.
   This build was not booted automatically because the router was left running
   the confirmed-good live test state for further inspection.
+- 2026-07-12: Located the OEM NVMEM/product-data source in the extracted
+  original firmware directory. The base MAC is not in `0:art`, `radio`, or
+  `appsblenv`; binary scan found `08:8a:f1:02:d6:88` only in
+  `/home/fabiano/opw/openwrt-build-tools/tools/firmware-lab/work/fw_extracted/OpenWrt.mtd13.tp-data.bin`
+  at raw UBI-image offset `0x2d5030`. Extracting with `ubireader_extract_files`
+  yields `.../_ubi_extract/OpenWrt.mtd13.tp-data/777166689/tp_data/default-mac`
+  containing exactly 6 bytes `08 8a f1 02 d6 88`, plus `device-id`, `pin`,
+  `product-info`, and `user-config`. Therefore the reliable MR80X v5 MAC source
+  is the UBIFS file `/tmp/tp_data/default-mac` after `09_mount_tp_data` mounts
+  `ubi1:tp_data`; DTS NVMEM cells against `0:art` would not find this MAC.
