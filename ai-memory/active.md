@@ -37,6 +37,15 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   `setenv ipaddr 192.168.6.1 && setenv serverip 192.168.6.83`
   and
   `tftpboot 0x44000000 <image>.itb && bootm 0x44000000`.
+  The ignored local overlay was edited accordingly: it now recreates
+  `switch0`, VLAN 1 as `1 2 3 6t`, and VLAN 2 as `0 6t` before starting the
+  diagnostic DHCP clients. Rebuilt artifacts tagged `probe-vlan2-fixed`:
+  initramfs ITB
+  `06923db0373c754bb3f9c6f72c7a0d41b1addd9a2856e3f9f52d06a8d57b5951`,
+  factory UBI
+  `e20261d3e9d3c9acbf846e3c20f70768f3e98b371a0b98f3088a43dddf47d743`,
+  sysupgrade
+  `0715eac36257808a8f24990786eff2ae05c86040746b308aa28d3cf52216ccca`.
 - 2026-07-11: Booted `literal-portmap` and confirmed the previous
   `hwport=255` corruption is gone. Runtime now shows direct PVID reads/writes
   with correct hwports and `eth1` receives real frames, but `eth1.1` and
