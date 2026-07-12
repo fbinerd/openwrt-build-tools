@@ -36,7 +36,14 @@ Keep writing short notes here when the focus changes or when a new blocker appea
   reserve warnings are partition-space/UBI geometry warnings and should not be
   fixed by touching `tp_data`; repartitioning/rootfs sizing would be a separate
   risky task. PSCI and U-Boot FDT fixup warnings are non-fatal firmware/DT
-  compatibility noise unless a concrete device failure is observed.
+  compatibility noise unless a concrete device failure is observed. Docker
+  build passed from this state. Artifacts tagged `working-dhcp-mac-no-reload`:
+  initramfs ITB
+  `e0b569d61ce1c2d89159bfa3ff72a706b2da872b708eace925a0249c96d96d0b`,
+  factory UBI
+  `dd9858561fcc8b972f84ec5e79b07c9e1ca05d72b16401ac9e488dc83d66e3c9`,
+  sysupgrade
+  `f2e5cb1889ea76ad24197291b50d1692e2b671e6894b0c8e04de88432716c00e`.
 - 2026-07-12: Stable MR80X v5 test overlay is now committed in OpenWrt as
   commit `6ac1f572a4` (`mr80x-v5: add stable lan wan test overlay`), despite
   the repo normally ignoring `files/`. It creates `lan` on `eth1.1`
