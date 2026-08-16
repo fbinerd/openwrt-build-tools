@@ -18,9 +18,12 @@ fi
 ROUTER_IP="$1"
 PACKAGE="$2"
 SSH_USER="${3:-root}"
-ROUTER_PASS="${4:-${ROUTER_PASS:-r0ut3r}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+. "$SCRIPT_DIR/load-env.sh"
+
+ROUTER_PASS="${4:-${ROUTER_PASS:-r0ut3r}}"
 OPENWRT_DIR="${OPENWRT_DIR:-$PROJECT_DIR/openwrt}"
 JOBS="${JOBS:-$(nproc)}"
 

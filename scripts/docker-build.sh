@@ -6,6 +6,8 @@ export DOCKER_BUILDKIT=1
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+. "$SCRIPT_DIR/load-env.sh"
+
 # Capture real UID/GID (works even when called with sudo)
 REAL_UID=${SUDO_UID:-$(id -u)}
 REAL_GID=${SUDO_GID:-$(id -g)}
@@ -13,9 +15,15 @@ REAL_GID=${SUDO_GID:-$(id -g)}
 # Paths
 OPENWRT_SRC="$PROJECT_DIR/openwrt"
 DOWNLOAD_DIR="$PROJECT_DIR/dl"
+# appsbl clean-room rebuild project (sibling of opw/, not inside it) - mounted
+# read-only so the openwrt build can pick up appsbl-ram-boot.bin (see
+# APPSBL_RAM_BOOT_BIN in target/linux/qualcommax/image/ipq50xx.mk) without
+# copying it in. Not required: skipped if the directory doesn't exist.
+APPSBL_PROJECT_DIR="${APPSBL_PROJECT_DIR:-$(cd "$PROJECT_DIR/../../appsbl" 2>/dev/null && pwd || true)}"
+CONTAINER_APPSBL_DIR="${CONTAINER_APPSBL_DIR:-/home/developer/appsbl}"
 OPENWRT_REPO_URL="${OPENWRT_REPO_URL:-https://github.com/openwrt/openwrt.git}"
 OPENWRT_BRANCH="${OPENWRT_BRANCH:-openwrt-25.12}"
-BUILDER_IMAGE_NAME="openwrt-${OPENWRT_BRANCH}-builder"
+BUILDER_IMAGE_NAME="${BUILDER_IMAGE_NAME:-openwrt-${OPENWRT_BRANCH}-builder}"
 ENABLE_CUSTOM_FEED="${ENABLE_CUSTOM_FEED:-0}"
 CONTAINER_PROJECT_DIR="${CONTAINER_PROJECT_DIR:-/home/developer/project}"
 CONTAINER_DL_CACHE_DIR="${CONTAINER_DL_CACHE_DIR:-/home/developer/dl_cache}"
@@ -80,14 +88,14 @@ else
 fi
 
 if [ "$MODE" = "normal" ]; then
-    if $DOCKER_CMD ps --format '{{.Names}}' | grep -qx 'openwrt_build'; then
-        echo "Container 'openwrt_build' is already running. Opening shell..."
-        exec $DOCKER_CMD exec -it openwrt_build /bin/bash
+    if $DOCKER_CMD ps --format '{{.Names}}' | grep -qx "${CONTAINER_NAME:-openwrt_build}"; then
+        echo "Container '${CONTAINER_NAME:-openwrt_build}' is already running. Opening shell..."
+        exec $DOCKER_CMD exec -it "${CONTAINER_NAME:-openwrt_build}" /bin/bash
     fi
 
-    if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx 'openwrt_build'; then
-        echo "Container 'openwrt_build' exists but is stopped. Starting and attaching..."
-        exec $DOCKER_CMD start -ai openwrt_build
+    if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME:-openwrt_build}"; then
+        echo "Container '${CONTAINER_NAME:-openwrt_build}' exists but is stopped. Starting and attaching..."
+        exec $DOCKER_CMD start -ai "${CONTAINER_NAME:-openwrt_build}"
     fi
 fi
 
@@ -185,6 +193,11 @@ pick_make_jobs_interactive() {
 }
 
 # Ensure host cache/work dirs exist
+if [ ! -e "$OPENWRT_SRC" ] && [ -d "$PROJECT_DIR/../openwrt" ]; then
+    echo "Found side-by-side OpenWrt workspace at $PROJECT_DIR/../openwrt. Linking it..."
+    ln -s "../openwrt" "$OPENWRT_SRC"
+fi
+
 mkdir -p "$OPENWRT_SRC"
 mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$ROUTER_CONFIGS_DIR"
@@ -272,7 +285,7 @@ fi
 chmod +x "$PROJECT_DIR/scripts/build_openwrt.sh"
 
 # 2) Build Docker image
-$DOCKER_CMD build -t "$BUILDER_IMAGE_NAME" \
+$DOCKER_CMD build -f "$PROJECT_DIR/Dockerfile" -t "$BUILDER_IMAGE_NAME" \
     --build-arg USER_ID="$REAL_UID" \
     --build-arg GROUP_ID="$REAL_GID" \
     "$PROJECT_DIR"
@@ -283,21 +296,35 @@ if [ $? -ne 0 ]; then
 fi
 
 # 3) Run container build
-if [ "$MODE" = "clean" ] && $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx 'openwrt_build'; then
-    echo "Found existing container 'openwrt_build'. Removing it (clean mode)..."
-    $DOCKER_CMD rm -f openwrt_build >/dev/null
+if [ "$MODE" = "clean" ] && $DOCKER_CMD ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME:-openwrt_build}"; then
+    echo "Found existing container '${CONTAINER_NAME:-openwrt_build}'. Removing it (clean mode)..."
+    $DOCKER_CMD rm -f "${CONTAINER_NAME:-openwrt_build}" >/dev/null
+fi
+
+# Resolve physical path for mounting (to handle symlinks to side-by-side openwrt)
+HOST_OPENWRT_SRC="$(readlink -f "$OPENWRT_SRC" || echo "$OPENWRT_SRC")"
+
+APPSBL_MOUNT_ARGS=()
+if [ -n "$APPSBL_PROJECT_DIR" ] && [ -d "$APPSBL_PROJECT_DIR" ]; then
+    echo "Mounting appsbl project (read-only): $APPSBL_PROJECT_DIR -> $CONTAINER_APPSBL_DIR"
+    APPSBL_MOUNT_ARGS=(-v "$APPSBL_PROJECT_DIR:$CONTAINER_APPSBL_DIR:ro")
+else
+    echo "appsbl project not found (looked in: ${APPSBL_PROJECT_DIR:-<unset>}); skipping mount."
 fi
 
 $DOCKER_CMD run --rm -it \
     -v "$PROJECT_DIR":"$CONTAINER_PROJECT_DIR" \
+    -v "$HOST_OPENWRT_SRC":"/home/developer/openwrt" \
     -v "$DOWNLOAD_DIR":"$CONTAINER_DL_CACHE_DIR" \
+    "${APPSBL_MOUNT_ARGS[@]}" \
     -e DL_CACHE_DIR="$CONTAINER_DL_CACHE_DIR" \
     -e OWT_MODE="$MODE" \
     -e OWT_MAKE_JOBS="$MAKE_JOBS" \
     -e OPENWRT_BRANCH="$OPENWRT_BRANCH" \
     -e ENABLE_CUSTOM_FEED="$ENABLE_CUSTOM_FEED" \
+    -e OPENWRT_DIR="/home/developer/openwrt" \
     -w "$CONTAINER_PROJECT_DIR" \
-    --name openwrt_build \
+    --name "${CONTAINER_NAME:-openwrt_build}" \
     "$BUILDER_IMAGE_NAME" \
     scripts/build_openwrt.sh
 

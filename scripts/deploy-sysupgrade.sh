@@ -10,9 +10,12 @@ fi
 
 ROUTER_IP="$1"
 SSH_USER="${2:-root}"
-ROUTER_PASS="${3:-${ROUTER_PASS:-r0ut3r}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+. "$SCRIPT_DIR/load-env.sh"
+
+ROUTER_PASS="${3:-${ROUTER_PASS:-r0ut3r}}"
 
 SSH_OPTS=(
     -o HostKeyAlgorithms=+ssh-rsa

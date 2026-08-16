@@ -1,0 +1,88 @@
+name: Build MR80X (v2 / v5)
+
+on:
+  workflow_dispatch:
+    inputs:
+      openwrt_repo:
+        description: "OpenWrt source repo to build"
+        required: true
+        default: "https://github.com/fbinerd/openwrt"
+      openwrt_branch:
+        description: "Branch/ref to build"
+        required: true
+        default: "stable/mercusys-mr80x-v5-rtl8367s-vb"
+      enable_custom_feed:
+        description: "Enable openwrt-custom-feed (appsbl-toolkit, keys, etc.)"
+        required: true
+        default: "1"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [mr80x-v2, mr80x-v5]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout openwrt-build-tools
+        uses: actions/checkout@v4
+
+      # OpenWrt builds are large; the default GitHub-hosted runner disk
+      # (~14GB free) isn't enough on its own. Drop preinstalled SDKs this
+      # workflow never uses.
+      - name: Free up runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo docker image prune -af || true
+          df -h /
+
+      - name: Clone OpenWrt (${{ github.event.inputs.openwrt_branch }})
+        run: |
+          git clone --depth 1 --branch "${{ github.event.inputs.openwrt_branch }}" \
+            "${{ github.event.inputs.openwrt_repo }}" openwrt
+
+      - name: Restore download cache
+        uses: actions/cache@v4
+        with:
+          path: dl
+          key: mr80x-dl-${{ matrix.device }}-${{ hashFiles(format('router-configs/{0}.config', matrix.device)) }}
+          restore-keys: |
+            mr80x-dl-${{ matrix.device }}-
+            mr80x-dl-
+
+      - name: Build the builder Docker image
+        run: |
+          docker build -f Dockerfile \
+            --build-arg USER_ID="$(id -u)" \
+            --build-arg GROUP_ID="$(id -g)" \
+            -t openwrt-25.12-builder .
+
+      - name: Build ${{ matrix.device }}
+        run: |
+          mkdir -p dl reports
+          docker run --rm \
+            -v "$PWD":/home/developer/project \
+            -e DL_CACHE_DIR=/home/developer/project/dl \
+            -e OPENWRT_DIR=/home/developer/project/openwrt \
+            -e OPENWRT_BRANCH="${{ github.event.inputs.openwrt_branch }}" \
+            -e ENABLE_CUSTOM_FEED="${{ github.event.inputs.enable_custom_feed }}" \
+            -e DEVICE_CONFIG="router-configs/${{ matrix.device }}.config" \
+            -w /home/developer/project \
+            openwrt-25.12-builder \
+            scripts/ci-build.sh
+
+      - name: Collect images
+        run: |
+          mkdir -p out
+          find openwrt/bin/targets/qualcommax/ipq50xx -maxdepth 1 -type f \
+            \( -iname "*${{ matrix.device }}*" -o -iname "*.manifest" -o -iname "*.buildinfo" -o -iname "profiles.json" -o -iname "sha256sums" \) \
+            -exec cp {} out/ \;
+          ls -la out
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-${{ matrix.device }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 14
